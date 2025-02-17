@@ -60,3 +60,15 @@ register_dataset(
     labels=CITYSCAPES_LABELS,
     colors=CITYSCAPES_COLORS,
 )(datasets.Cityscapes)
+
+
+def _test():
+    from registry import DATASET_ZOO
+
+    entry = DATASET_ZOO["VOC"]
+    train_dataset = entry.train_constructor(root=r"dataset", year="2007")
+    print(len(train_dataset))  # type: ignore
+
+
+if __name__ == "__main__":
+    _test()
