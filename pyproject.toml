@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+dynamic = ["dependencies"]
+name = "semantic-segmentation-toolkit"
+version = "0.1.0"
+requires-python = ">=3.10"
+authors = [
+    { name = "Cheung Ka Fai", email = "cyrus.cheungkf@gmail.com" },
+    { email = "m19990328@gmail.com" },
+]
+description = "A simple semantic segmentation package using PyTorch"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["pytorch", "semantic segmentation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+]
+
+[project.urls]
+Homepage = "https://github.com/CyrusCKF/segmentic-segmentation-toolkit"
+Documentation = "https://github.com/CyrusCKF/segmentic-segmentation-toolkit/blob/main/README.md"
+Repository = "https://github.com/CyrusCKF/segmentic-segmentation-toolkit"
+Issues = "https://github.com/CyrusCKF/segmentic-segmentation-toolkit/issues"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["doc/requirements.txt"] }
