@@ -1,0 +1,16 @@
+torch
+torchvision
+torchaudio
+torchinfo
+matplotlib
+opencv-python
+psutil
+tqdm
+seaborn
+scikit-learn
+wandb
+python-dotenv
+toml
+jupyter
+Flask
+Flask-Cors
