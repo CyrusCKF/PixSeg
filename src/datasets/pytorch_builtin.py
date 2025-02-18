@@ -38,7 +38,7 @@ register_dataset(
     {"image_set": "val"},
     len(VOC_LABELS),
     name="VOC",
-    background_index=255,
+    ignore_index=255,
     labels=VOC_LABELS,
     colors=VOC_COLORS,
 )(datasets.VOCSegmentation)
@@ -48,7 +48,7 @@ register_dataset(
     {"mode": "segmentation", "image_set": "val"},
     len(VOC_LABELS),
     name="SBD",
-    background_index=255,
+    ignore_index=255,
     labels=VOC_LABELS,
     colors=VOC_COLORS,
 )(datasets.SBDataset)

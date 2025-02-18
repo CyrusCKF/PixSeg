@@ -13,14 +13,14 @@ class DatasetEntry:
         base_constructor: The original constructor of the registered dataset
         train_constructor: Constructor to create training dataset
         val_constructor: Constructor to create validation dataset
-        background_index: Index in mask that should be ignored
+        ignore_index: Index in mask that should be ignored
     """
 
     base_constructor: Callable[..., Dataset]
     train_constructor: Callable[..., Dataset]
     val_constructor: Callable[..., Dataset]
     num_classes: int
-    background_index: int | None
+    ignore_index: int | None
     labels: Sequence[str]
     colors: Sequence[tuple[int, int, int]]
 
@@ -30,7 +30,7 @@ class DatasetEntry:
         train_constructor: Callable[..., Dataset],
         val_constructor: Callable[..., Dataset],
         num_classes: int,
-        background_index: int | None = None,
+        ignore_index: int | None = None,
         labels: Sequence[str] | None = None,
         colors: Sequence[tuple[int, int, int]] | None = None,
     ):
@@ -38,7 +38,7 @@ class DatasetEntry:
         self.train_constructor = train_constructor
         self.val_constructor = val_constructor
         self.num_classes = num_classes
-        self.background_index = background_index
+        self.ignore_index = ignore_index
         self.labels = (
             [f"Class {i}" for i in range(self.num_classes)]
             if labels is None
@@ -62,7 +62,7 @@ def register_dataset(
     val_kwargs: dict,
     num_classes: int,
     name: str | None = None,
-    background_index: int | None = None,
+    ignore_index: int | None = None,
     labels: Sequence[str] | None = None,
     colors: Sequence[tuple[int, int, int]] | None = None,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
@@ -77,7 +77,7 @@ def register_dataset(
             partial(callable, **train_kwargs),
             partial(callable, **val_kwargs),
             num_classes,
-            background_index=background_index,
+            ignore_index=ignore_index,
             labels=labels,
             colors=colors,
         )

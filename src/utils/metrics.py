@@ -13,9 +13,9 @@ class MetricStore:
     Example usage:
     ```
         ms = MetricStore(10)
-        foreach results:
+        foreach iter:
             ms.store_results(predictions, ground_truths)
-            ms.store_measures(batch_size, { "loss": 0.534 })
+            ms.store_measures(batch_size, { "loss": loss })
         metrics = ms.summarize()
     ```
     """
