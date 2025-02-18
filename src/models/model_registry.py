@@ -1,9 +1,11 @@
+import sys
+from pathlib import Path
 from typing import Callable, ParamSpec, TypeVar
 
 from torch import nn
 
-MODEL_ZOO: dict[str, Callable[..., nn.Module]] = {}
-"""Mapping of model name to the model builder"""
+sys.path.append(str((Path(__file__) / "..").resolve()))
+from model_zoo import MODEL_ZOO
 
 T = TypeVar("T", bound=nn.Module)
 P = ParamSpec("P")
@@ -20,3 +22,13 @@ def register_model(
         return func
 
     return wrapper
+
+
+if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+
+    sys.path.append(str((Path(__file__) / "..").resolve()))
+    import pytorch_models
+
+    print(MODEL_ZOO)
