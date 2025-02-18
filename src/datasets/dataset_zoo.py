@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from functools import partial
-from typing import Callable, ParamSpec, Sequence, TypeVar
+from typing import Callable, Sequence
 
 from torch.utils.data import Dataset
 
@@ -20,7 +19,7 @@ class DatasetEntry:
     train_constructor: Callable[..., Dataset]
     val_constructor: Callable[..., Dataset]
     num_classes: int
-    ignore_index: int | None
+    ignore_index: int
     labels: Sequence[str]
     colors: Sequence[tuple[int, int, int]]
 
@@ -30,7 +29,7 @@ class DatasetEntry:
         train_constructor: Callable[..., Dataset],
         val_constructor: Callable[..., Dataset],
         num_classes: int,
-        ignore_index: int | None = None,
+        ignore_index: int = -100,
         labels: Sequence[str] | None = None,
         colors: Sequence[tuple[int, int, int]] | None = None,
     ):
@@ -44,55 +43,11 @@ class DatasetEntry:
             if labels is None
             else labels
         )
-        self.colors = [] if colors is None else colors  # TODO
+        self.colors = [] if colors is None else colors  # TODO default colors
 
 
-## BUG won't update from other modules
 DATASET_ZOO: dict[str, DatasetEntry] = {}
 """Mapping of dataset name to `DatabaseEntry`
 
 All datasets must have the kwargs root (Path) and transforms (Callable)
 """
-
-T = TypeVar("T", bound=Dataset)
-P = ParamSpec("P")
-
-
-def register_dataset(
-    train_kwargs: dict,
-    val_kwargs: dict,
-    num_classes: int,
-    name: str | None = None,
-    ignore_index: int | None = None,
-    labels: Sequence[str] | None = None,
-    colors: Sequence[tuple[int, int, int]] | None = None,
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
-    """Can be used on functions or classes"""
-
-    def wrapper(callable: Callable[P, T]) -> Callable[P, T]:
-        key = callable.__name__ if name is None else name
-        if key in DATASET_ZOO:
-            raise ValueError(f"An entry is already registered under the name '{key}'.")
-        DATASET_ZOO[key] = DatasetEntry(
-            callable,
-            partial(callable, **train_kwargs),
-            partial(callable, **val_kwargs),
-            num_classes,
-            ignore_index=ignore_index,
-            labels=labels,
-            colors=colors,
-        )
-        return callable
-
-    return wrapper
-
-
-if __name__ == "__main__":
-    print(DATASET_ZOO)
-    import sys
-    from pathlib import Path
-
-    sys.path.append(str((Path(__file__) / "..").resolve()))
-    from pytorch_builtin import VOC_COLORS
-
-    print(DATASET_ZOO)

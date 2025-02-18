@@ -49,7 +49,7 @@ class DataTransform(v2.Compose):
     """
 
     def __init__(
-        self, size: tuple[int, int] | None = None, mask_fill: int = 255
+        self, size: tuple[int, int] | None = None, mask_fill: int = -100
     ) -> None:
         image_transforms = [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
         mask_transforms = [

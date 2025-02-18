@@ -35,6 +35,7 @@ class Checkpoint(TypedDict):
     job_metrics: dict[str, dict[str, list[float]]]
 
 
+# name of the jobs
 TRAIN = "train"
 VAL = "val"
 
@@ -100,18 +101,20 @@ class Trainer:
                 train_ms = engine.train_one_epoch(
                     data_loader=self.train_loader,
                     augment=self.train_augment,
+                    desc=TRAIN,
                     **self.__dict__,
                 )
                 self.lr_scheduler.step()
-                self.record_measures(TRAIN, i, train_ms)
+                self.record_metrics(TRAIN, i, train_ms)
                 self.save_snapshot(TRAIN, i, self.train_loader.dataset)
 
                 val_ms = engine.eval_one_epoch(
                     data_loader=self.val_loader,
                     augment=self.val_augment,
+                    desc=VAL,
                     **self.__dict__,
                 )
-                self.record_measures(VAL, i, val_ms)
+                self.record_metrics(VAL, i, val_ms)
                 self.save_snapshot(VAL, i, self.val_loader.dataset)
 
                 if self.out_folder is None:
@@ -132,15 +135,18 @@ class Trainer:
 
             logger.info(f"Training completed")
 
-    def record_measures(self, job: str, step: int, ms: MetricStore):
-        for logger in self.loggers:
-            logger.log_epoch_metrics(job, step, ms)
+    def record_metrics(self, job: str, step: int, ms: MetricStore):
+        for l in self.loggers:
+            l.log_epoch_metrics(job, step, ms)
+        metrics = ms.summarize()
+        metrics_text = "| ".join(f"{k}={v:.4f}" for k, v in metrics.items())
+        logger.debug(f"Metrics for {job} {step}: {metrics_text}")
 
-        for k, v in ms.summarize().items():
+        for k, v in metrics.items():
             self.job_metrics[job].setdefault(k, [])
             self.job_metrics[job][k].append(v)
-        for logger in self.loggers:
-            logger.log_running_metrics(self.job_metrics)
+        for l in self.loggers:
+            l.log_running_metrics(self.job_metrics)
 
     def save_snapshot(self, job: str, step: int, dataset: data.Dataset):
         snapshot = engine.create_snapshot(
@@ -149,8 +155,8 @@ class Trainer:
             num_samples=self.num_snapshot_data,
             **self.__dict__,
         )
-        for logger in self.loggers:
-            logger.save_snapshot(job, step, snapshot)
+        for l in self.loggers:
+            l.save_snapshot(job, step, snapshot)
 
     def save_checkpoint(self, model_file: Path, checkpoint_file: Path):
         """save model in separate file for inference"""

@@ -62,6 +62,7 @@ def train_one_epoch(
     learn_step: int,
     num_classes: int,
     loss_weight: dict[str, float],
+    desc="Train",
     silent=False,
     **kwargs,
 ) -> MetricStore:
@@ -79,7 +80,7 @@ def train_one_epoch(
     model.train()
     ms = MetricStore(num_classes)
     loader = tqdm.tqdm(
-        enumerate(data_loader), total=len(data_loader), desc="Train", disable=silent
+        enumerate(data_loader), total=len(data_loader), desc=desc, disable=silent
     )
     for i, (images, masks) in loader:
         start_time = default_timer()
@@ -112,6 +113,7 @@ def eval_one_epoch(
     criterion: nn.Module,
     device: str,
     num_classes: int,
+    desc="Eval",
     silent=False,
     **kwargs,
 ) -> MetricStore:
@@ -122,7 +124,7 @@ def eval_one_epoch(
     model.eval()
     ms = MetricStore(num_classes)
     loader = tqdm.tqdm(
-        iter(data_loader), total=len(data_loader), desc="Eval", disable=silent
+        iter(data_loader), total=len(data_loader), desc=desc, disable=silent
     )
     for images, masks in loader:
         start_time = default_timer()

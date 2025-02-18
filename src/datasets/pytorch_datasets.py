@@ -4,7 +4,7 @@ from pathlib import Path
 from torchvision import datasets
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from registry import register_dataset
+from dataset_registry import register_dataset
 
 # fmt: off
 VOC_LABELS = ("background",
@@ -62,7 +62,7 @@ register_dataset(
 
 
 def _test():
-    from registry import DATASET_ZOO
+    from dataset_registry import DATASET_ZOO
 
     entry = DATASET_ZOO["VOC"]
     train_dataset = entry.train_constructor(root=r"dataset", year="2007")

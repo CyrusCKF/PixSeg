@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 from torchvision.transforms.v2 import Transform
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from registry import register_dataset
+from dataset_registry import register_dataset
 
 
 @register_dataset({"split": "train"}, {"split": "val"}, 20)

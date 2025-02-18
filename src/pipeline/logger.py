@@ -30,7 +30,7 @@ def init_logging(log_file: Path | None):
         level=logging.DEBUG, format=FORMAT, datefmt=DATEFMT, handlers=handlers
     )
 
-    # these loggers are too noisy. Hide them
+    # these loggers are too annoying. Hide them
     loggers = [
         "PIL.TiffImagePlugin",
         "PIL.PngImagePlugin",
@@ -85,7 +85,7 @@ class LocalLogger(Logger):
         if self.folder is None:
             return
         visual.plot_running_metrics(metrics)
-        visual.exhibit_figure(save_to=self.folder / "measures.png")
+        visual.exhibit_figure(save_to=self.folder / "running_metrics.png")
 
     def log_epoch_metrics(self, job: str, step: int, ms: MetricStore):
         if self.folder is None:
@@ -96,14 +96,14 @@ class LocalLogger(Logger):
         cm = ms.confusion_matrix
         normalized_cm = cm / cm.sum(axis=1, keepdims=True)
         visual.plot_confusion_matrix(normalized_cm, self.labels)
-        visual.exhibit_figure(save_to=job_folder / f"cm_e{step:>04}.png")
+        visual.exhibit_figure(save_to=job_folder / f"cm_{step:>04}.png")
 
     def save_snapshot(self, job: str, step: int, snapshot: PIL.Image.Image):
         if self.folder is None:
             return
         job_folder = self.folder / job
         job_folder.mkdir(exist_ok=True)
-        path = self.folder / job / f"snapshot-{step:>04}.png"
+        path = self.folder / job / f"snapshot_{step:>04}.png"
         snapshot.save(path)
 
 

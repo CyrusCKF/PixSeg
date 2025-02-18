@@ -105,7 +105,7 @@ def plot_running_metrics(
     """Plot a 2d figure in grid to all the metrics
 
     Args:
-        job_measures: Mapping of job_type to sub-mapping of individual metrics to values.
+        job_metrics: Mapping of job_type to sub-mapping of individual metrics to values.
             If job_type is `""`, it will not be shown in the plot title
     """
     if figure is None:
@@ -117,9 +117,9 @@ def plot_running_metrics(
     figure.set_size_inches(ncols * 3, nrows * 3)
 
     for i, job in enumerate(sorted(job_metrics.keys())):
-        measures = job_metrics[job]
-        for j, m in enumerate(sorted(measures.keys())):
-            values = measures[m]
+        metrics = job_metrics[job]
+        for j, m in enumerate(sorted(metrics.keys())):
+            values = metrics[m]
             axes: Axes = axes_array[i, j]
             title = job + "/" + m if job != "" else m
             axes.set_title(title)
@@ -128,7 +128,7 @@ def plot_running_metrics(
             axes.plot(values)
 
         # remove excessive axes
-        for j in range(len(measures), ncols):
+        for j in range(len(metrics), ncols):
             figure.delaxes(axes_array[i, j])
     figure.tight_layout()
 
@@ -136,11 +136,11 @@ def plot_running_metrics(
 def _test():
     from sklearn.metrics import confusion_matrix
 
-    job_measures = {
+    job_metrics = {
         "train": {"loss": [1, 2, 3, 4], "acc": [0.4, 0.51, 0.63, 0.6543]},
         "val": {"acc": [0.42, 0.39, 0.53, 0.5543]},
     }
-    plot_running_metrics(job_measures)
+    plot_running_metrics(job_metrics)
     exhibit_figure(show=True)
 
     num_classes = 20
