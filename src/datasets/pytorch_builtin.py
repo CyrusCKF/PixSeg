@@ -32,7 +32,6 @@ CITYSCAPES_COLORS = ((128, 64, 128), (244, 35, 232), (70, 70, 70), (102, 102, 15
 # fmt: on
 
 # register builtin datasets
-# TODO verify these
 register_dataset(
     {"image_set": "train"},
     {"image_set": "val"},

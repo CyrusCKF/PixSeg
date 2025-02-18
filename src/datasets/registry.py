@@ -47,6 +47,7 @@ class DatasetEntry:
         self.colors = [] if colors is None else colors  # TODO
 
 
+## BUG won't update from other modules
 DATASET_ZOO: dict[str, DatasetEntry] = {}
 """Mapping of dataset name to `DatabaseEntry`
 
@@ -84,3 +85,14 @@ def register_dataset(
         return callable
 
     return wrapper
+
+
+if __name__ == "__main__":
+    print(DATASET_ZOO)
+    import sys
+    from pathlib import Path
+
+    sys.path.append(str((Path(__file__) / "..").resolve()))
+    from pytorch_builtin import VOC_COLORS
+
+    print(DATASET_ZOO)

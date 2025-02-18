@@ -58,11 +58,11 @@ class DataTransform(v2.Compose):
             lambda mask: torch.squeeze(mask, 0),
         ]
         if size is not None:
-            image_transforms.append(
-                v2.RandomCrop(size, pad_if_needed=True, padding_mode="reflect")
+            image_transforms.insert(
+                0, v2.RandomCrop(size, pad_if_needed=True, padding_mode="reflect")
             )
-            mask_transforms.append(
-                v2.RandomCrop(size, pad_if_needed=True, fill=mask_fill)
+            mask_transforms.insert(
+                0, v2.RandomCrop(size, pad_if_needed=True, fill=mask_fill)
             )
 
         image_transform = v2.Compose(image_transforms)
