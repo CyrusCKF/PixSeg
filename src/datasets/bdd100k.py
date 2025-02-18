@@ -9,7 +9,7 @@ sys.path.append(str((Path(__file__) / "..").resolve()))
 from dataset_registry import register_dataset
 
 
-@register_dataset({"split": "train"}, {"split": "val"}, 20)
+@register_dataset({"split": "train"}, {"split": "val"}, meta_key="Cityscapes")
 class BDD100K(Dataset):
     def __init__(
         self,

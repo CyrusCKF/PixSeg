@@ -1,53 +1,74 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable, Sequence
 
 from torch.utils.data import Dataset
 
 
 @dataclass
-class DatasetEntry:
-    """Contains dataset constructor and useful information
+class DatasetMeta:
+    """Contain dataset useful information
 
     Attributes:
-        base_constructor: The original constructor of the registered dataset
-        train_constructor: Constructor to create training dataset
-        val_constructor: Constructor to create validation dataset
         ignore_index: Index in mask that should be ignored
     """
 
-    base_constructor: Callable[..., Dataset]
-    train_constructor: Callable[..., Dataset]
-    val_constructor: Callable[..., Dataset]
     num_classes: int
     ignore_index: int
     labels: Sequence[str]
     colors: Sequence[tuple[int, int, int]]
 
-    def __init__(
-        self,
-        base_constructor: Callable[..., Dataset],
-        train_constructor: Callable[..., Dataset],
-        val_constructor: Callable[..., Dataset],
+    @staticmethod
+    def default(
         num_classes: int,
-        ignore_index: int = -100,
+        ignore_index=-100,
         labels: Sequence[str] | None = None,
         colors: Sequence[tuple[int, int, int]] | None = None,
-    ):
-        self.base_constructor = base_constructor
-        self.train_constructor = train_constructor
-        self.val_constructor = val_constructor
-        self.num_classes = num_classes
-        self.ignore_index = ignore_index
-        self.labels = (
-            [f"Class {i}" for i in range(self.num_classes)]
-            if labels is None
-            else labels
-        )
-        self.colors = [] if colors is None else colors  # TODO default colors
+    ) -> "DatasetMeta":
+        final_labels = labels or [f"Class {i}" for i in range(num_classes)]
+        final_colors = colors or []  # TODO default colors
+        return DatasetMeta(num_classes, ignore_index, final_labels, final_colors)
 
+
+@dataclass
+class DatasetEntry:
+    """Contain dataset constructors"""
+
+    constructor: Callable[..., Dataset]
+    train_kwargs: dict
+    val_kwargs: dict
+    meta_key: str | None = None
+    num_classes: int | None = None
+
+    def __post_init__(self):
+        if self.num_classes is not None and self.meta_key is not None:
+            raise ValueError(
+                "Exactly one of num_classes or meta_key should not be None"
+            )
+
+    def construct_train(self, root: Path | str, transforms=None, *args, **kwargs):
+        return self.constructor(
+            root=root, transforms=transforms, *args, **kwargs, **self.train_kwargs
+        )
+
+    def construct_val(self, root: Path | str, transforms=None, *args, **kwargs):
+        return self.constructor(
+            root=root, transforms=transforms, *args, **kwargs, **self.val_kwargs
+        )
+
+    @property
+    def meta(self) -> DatasetMeta:
+        if self.meta_key is not None:
+            return METADATA_ZOO[self.meta_key]
+        if self.num_classes is not None:
+            return DatasetMeta.default(self.num_classes)
+        raise ValueError("No valid meta")
+
+
+METADATA_ZOO: dict[str, DatasetMeta] = {}
 
 DATASET_ZOO: dict[str, DatasetEntry] = {}
 """Mapping of dataset name to `DatabaseEntry`
 
-All datasets must have the kwargs root (Path) and transforms (Callable)
+All dataset constructors must have the kwargs root (Path|str) and transforms (Callable|None)
 """
