@@ -1,11 +1,10 @@
 import sys
 from pathlib import Path
-from typing import Any, Dict, Sequence
+from typing import Sequence
 
 import torch
 from torch import Tensor, nn
 from torchvision.transforms import v2
-from torchvision.transforms.v2 import functional as TF
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
 from rng import get_rng_state, set_rng_state
@@ -43,7 +42,7 @@ class DataTransform(v2.Compose):
     """The basic data transform for semantic segmentation task
 
     This ensures 2 things:
-    1. Image will be float `Tensor` with correct range of values; Mask will be int
+    1. Image will be float `Tensor` with correct range of values; Mask will be long
         `Tensor` without the channel dimension.
     2. If `size` is provided, all images and masks will have the same final size using
         `RandomCrop`
@@ -53,7 +52,11 @@ class DataTransform(v2.Compose):
         self, size: tuple[int, int] | None = None, mask_fill: int = 255
     ) -> None:
         image_transforms = [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
-        mask_transforms = [v2.ToImage(), lambda mask: torch.squeeze(mask, 1)]
+        mask_transforms = [
+            v2.ToImage(),
+            v2.ToDtype(torch.long),
+            lambda mask: torch.squeeze(mask, 0),
+        ]
         if size is not None:
             image_transforms.append(
                 v2.RandomCrop(size, pad_if_needed=True, padding_mode="reflect")

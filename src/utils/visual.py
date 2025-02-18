@@ -143,12 +143,12 @@ def _test():
     plot_running_metrics(job_measures)
     exhibit_figure(show=True)
 
-    num_cats = 20
-    truths = np.random.randint(0, num_cats, [10000])
-    preds = np.random.randint(0, num_cats, [10000])
-    matrix = confusion_matrix(truths, preds, labels=range(num_cats))
-    # matrix = safe_normalize(matrix, axis=1)
-    plot_confusion_matrix(matrix, [f"Group {i}" for i in range(num_cats)])
+    num_classes = 20
+    truths = np.random.randint(0, num_classes, [10000])
+    preds = np.random.randint(0, num_classes, [10000])
+    matrix = confusion_matrix(truths, preds, labels=range(num_classes))
+    matrix /= matrix.sum(axis=1, keepdims=True)  # normalize
+    plot_confusion_matrix(matrix, [f"Group {i}" for i in range(num_classes)])
     exhibit_figure(show=True)
 
 

@@ -99,9 +99,9 @@ def metrics_from_confusion(cm: np.ndarray) -> dict[str, float]:
 
 
 def _test():
-    num_cats = 10
-    truths = np.random.randint(0, num_cats, [160, 90]).flatten()
-    preds = np.random.randint(0, num_cats, [160, 90]).flatten()
+    num_classes = 10
+    truths = np.random.randint(0, num_classes, [160, 90]).flatten()
+    preds = np.random.randint(0, num_classes, [160, 90]).flatten()
     matrix = confusion_matrix(truths, preds)
     print(matrix)
     print(metrics_from_confusion(matrix))
