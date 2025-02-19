@@ -18,6 +18,16 @@ class DatasetMeta:
     labels: Sequence[str]
     colors: Sequence[tuple[int, int, int]]
 
+    def __post_init__(self):
+        if self.num_classes != len(self.labels):
+            raise ValueError(
+                f"Mismatch size of labels, expected {self.num_classes}, but got {len(self.labels)}"
+            )
+        if self.num_classes != len(self.colors):
+            raise ValueError(
+                f"Mismatch size of colors, expected {self.num_classes}, but got {len(self.colors)}"
+            )
+
     @staticmethod
     def default(
         num_classes: int,
@@ -26,7 +36,8 @@ class DatasetMeta:
         colors: Sequence[tuple[int, int, int]] | None = None,
     ) -> "DatasetMeta":
         final_labels = labels or [f"Class {i}" for i in range(num_classes)]
-        final_colors = colors or []  # TODO default colors
+        # TODO better default colors
+        final_colors = colors or [(255, 255, 255) for i in range(num_classes)]
         return DatasetMeta(num_classes, ignore_index, final_labels, final_colors)
 
 
@@ -39,6 +50,7 @@ class DatasetEntry:
     val_kwargs: dict
     meta_key: str | None = None
     num_classes: int | None = None
+    """Please access via `meta.num_classes`"""
 
     def __post_init__(self):
         if self.num_classes is not None and self.meta_key is not None:
@@ -46,12 +58,16 @@ class DatasetEntry:
                 "Exactly one of num_classes or meta_key should not be None"
             )
 
-    def construct_train(self, root: Path | str, transforms=None, *args, **kwargs):
+    def construct_train(
+        self, root: Path | str, transforms: Callable | None = None, *args, **kwargs
+    ):
         return self.constructor(
             root=root, transforms=transforms, *args, **kwargs, **self.train_kwargs
         )
 
-    def construct_val(self, root: Path | str, transforms=None, *args, **kwargs):
+    def construct_val(
+        self, root: Path | str, transforms: Callable | None = None, *args, **kwargs
+    ):
         return self.constructor(
             root=root, transforms=transforms, *args, **kwargs, **self.val_kwargs
         )
@@ -59,14 +75,13 @@ class DatasetEntry:
     @property
     def meta(self) -> DatasetMeta:
         if self.meta_key is not None:
-            return METADATA_ZOO[self.meta_key]
+            return DATASET_METADATA[self.meta_key]
         if self.num_classes is not None:
             return DatasetMeta.default(self.num_classes)
         raise ValueError("No valid meta")
 
 
-METADATA_ZOO: dict[str, DatasetMeta] = {}
-
+DATASET_METADATA: dict[str, DatasetMeta] = {}
 DATASET_ZOO: dict[str, DatasetEntry] = {}
 """Mapping of dataset name to `DatabaseEntry`
 

@@ -5,7 +5,6 @@ from torchvision import datasets
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
 from dataset_registry import register_dataset, register_metadata
-from dataset_zoo import DatasetMeta
 
 # fmt: off
 VOC_LABELS = ("background",
@@ -32,10 +31,8 @@ CITYSCAPES_COLORS = ((128, 64, 128), (244, 35, 232), (70, 70, 70), (102, 102, 15
                      (0, 0, 230), (119, 11, 32), (0, 0, 0))
 # fmt: on
 
-register_metadata("VOC", DatasetMeta(21, 255, VOC_LABELS, VOC_COLORS))
-register_metadata(
-    "Cityscapes", DatasetMeta(20, 255, CITYSCAPES_LABELS, CITYSCAPES_COLORS)
-)
+register_metadata("VOC", 21, 255, VOC_LABELS, VOC_COLORS)
+register_metadata("Cityscapes", 20, 255, CITYSCAPES_LABELS, CITYSCAPES_COLORS)
 
 # register builtin datasets
 register_dataset(
@@ -61,7 +58,7 @@ def _test():
     from dataset_registry import DATASET_ZOO
 
     entry = DATASET_ZOO["VOC"]
-    train_dataset = entry.construct_train(root=r"D:\_Dataset", year="2007")
+    train_dataset = entry.construct_train(root=r"dataset", year="2007")
     print(len(train_dataset))  # type: ignore
     print(entry.meta)
 

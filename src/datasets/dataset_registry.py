@@ -1,11 +1,11 @@
 import sys
 from pathlib import Path
-from typing import Callable, ParamSpec, TypeVar
+from typing import Callable, ParamSpec, Sequence, TypeVar
 
 from torch.utils.data import Dataset
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from dataset_zoo import DATASET_ZOO, METADATA_ZOO, DatasetEntry, DatasetMeta
+from dataset_zoo import DATASET_METADATA, DATASET_ZOO, DatasetEntry, DatasetMeta
 
 T = TypeVar("T", bound=Dataset)
 P = ParamSpec("P")
@@ -35,11 +35,17 @@ def register_dataset(
     return wrapper
 
 
-# TODO better interface
-def register_metadata(name: str, metadata: DatasetMeta):
-    if name in METADATA_ZOO:
+def register_metadata(
+    name: str,
+    num_classes: int,
+    ignore_index: int,
+    labels: Sequence[str],
+    colors: Sequence[tuple[int, int, int]],
+):
+    if name in DATASET_METADATA:
         raise ValueError(f"An entry is already registered under the name '{name}'.")
-    METADATA_ZOO[name] = metadata
+    metadata = DatasetMeta(num_classes, ignore_index, labels, colors)
+    DATASET_METADATA[name] = metadata
 
 
 if __name__ == "__main__":
@@ -50,3 +56,4 @@ if __name__ == "__main__":
     import pytorch_datasets
 
     print(DATASET_ZOO)
+    print(DATASET_METADATA)
