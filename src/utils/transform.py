@@ -70,6 +70,7 @@ class DataTransform(v2.Compose):
         super().__init__([ImageMaskTransform(image_transform, mask_transform)])
 
 
+# TODO add blur transform
 class DataAugment(v2.Compose):
     """Default data augmentations for semantic segmentation"""
 

@@ -85,5 +85,5 @@ DATASET_METADATA: dict[str, DatasetMeta] = {}
 DATASET_ZOO: dict[str, DatasetEntry] = {}
 """Mapping of dataset name to `DatabaseEntry`
 
-All dataset constructors must have the kwargs root (Path|str) and transforms (Callable|None)
+All dataset constructors must accept kwargs `root (Path|str)` and `transforms (Callable|None)`
 """
