@@ -33,16 +33,16 @@ params = { lr = 3e-4, momentum = 0.9, weight_decay = 5e-4 }
 lr_scheduler = "StepLR"
 params = { step_size = 10, gamma = 0.5 }
 
-[misc]
-out_folder = "../runs"
-epochs = 30
+[trainer.params]
+num_epochs = 30
 device = "cuda"
-
-[trainer]
-# checkpoint = "../runs/exp1/latest_checkpoint.pth" # uncomment to resume checkpoint
 checkpoint_steps = 1
 best_by = "max:miou"
 data_per_snapshot = 4
+
+[paths]
+out_folder = "../runs"
+# checkpoint = "../runs/exp1/latest_checkpoint.pth" # uncomment to resume checkpoint
 
 [log.wandb]
 # api_key = "ssssssssssssssssssssssssssssssssssssssss" # uncomment to use wandb
