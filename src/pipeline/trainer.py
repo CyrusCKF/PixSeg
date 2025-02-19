@@ -6,8 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence, TypedDict
 
+import numpy as np
 import torch
-from torch import GradScaler, nn, optim
+from torch import GradScaler, nn
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import LRScheduler
 from torch.utils import data
 from torchvision.transforms import v2
 
@@ -23,7 +26,8 @@ logger = logging.getLogger(__name__)
 
 # use TypedDict for easier serialization
 class Checkpoint(TypedDict):
-    """
+    """Checkpoint for restoring training. Model state is saved in a separate file.
+
     Attributes:
         model_path: relative path from the checkpoint file to the model file
     """
@@ -35,14 +39,10 @@ class Checkpoint(TypedDict):
     job_metrics: dict[str, dict[str, list[float]]]
 
 
-# name of the jobs
-TRAIN = "train"
-VAL = "val"
-
-
 @dataclass
 class Trainer:
-    """Repeatedly run training and validation loop, log results and save checkpoints
+    """Repeatedly run training and validation loop, provide detailed logs
+    and save checkpoints
 
     Example usage:
     ```
@@ -53,6 +53,10 @@ class Trainer:
     ```
     """
 
+    # name of the jobs
+    TRAIN = "train"
+    VAL = "val"
+
     # --- components
     model: nn.Module
     train_loader: data.DataLoader
@@ -60,19 +64,19 @@ class Trainer:
     val_loader: data.DataLoader
     val_augment: v2.Transform
     criterion: nn.Module
-    optimizer: optim.Optimizer
-    lr_scheduler: optim.lr_scheduler.LRScheduler
+    optimizer: Optimizer
+    lr_scheduler: LRScheduler
     scaler: GradScaler
     device: str
     learn_step: int
     num_epochs: int
-    loss_weight: dict[str, float]
     num_classes: int
-    # --- util
+    loss_weight: dict[str, float]
+    # util
     labels: Sequence[str]
     colors: Sequence[tuple[int, int, int]]
     out_folder: Path | None
-    checkpoint_epochs: int = 1
+    checkpoint_steps: int = 1
     best_by: str = "max:miou"
     """In the form of `"[max|min]:[metric]"` where metric must be a valid key in metrics"""
     loggers: Sequence[Logger] = ()
@@ -84,7 +88,10 @@ class Trainer:
         if len(self.colors) != self.num_classes:
             raise ValueError(f"Colors have different size than num_classes")
 
-        self.job_metrics: dict[str, dict[str, list[float]]] = {TRAIN: {}, VAL: {}}
+        self.job_metrics: dict[str, dict[str, list[float]]] = {
+            self.TRAIN: {},
+            self.VAL: {},
+        }
         self.model.to(self.device)
         self.criterion.to(self.device)
 
@@ -93,47 +100,34 @@ class Trainer:
             [stack.enter_context(logger) for logger in self.loggers]
 
             start_epoch = 0
-            if len(self.job_metrics[TRAIN]) > 0:
-                start_epoch = len(next(iter(self.job_metrics[TRAIN].values())))
-
+            if len(self.job_metrics[self.TRAIN]) > 0:
+                start_epoch = len(next(iter(self.job_metrics[self.TRAIN].values())))
             for i in range(start_epoch, self.num_epochs):
-                logger.info(f"----- Epoch [{i:>4}/{self.num_epochs}] -----")
-                train_ms = engine.train_one_epoch(
-                    data_loader=self.train_loader,
-                    augment=self.train_augment,
-                    desc=TRAIN,
-                    **self.__dict__,
-                )
-                self.lr_scheduler.step()
-                self.record_metrics(TRAIN, i, train_ms)
-                self.save_snapshot(TRAIN, i, self.train_loader.dataset)
-
-                val_ms = engine.eval_one_epoch(
-                    data_loader=self.val_loader,
-                    augment=self.val_augment,
-                    desc=VAL,
-                    **self.__dict__,
-                )
-                self.record_metrics(VAL, i, val_ms)
-                self.save_snapshot(VAL, i, self.val_loader.dataset)
-
-                if self.out_folder is None:
-                    continue
-                if (i + 1) % self.checkpoint_epochs == 0:
-                    model_file = self.out_folder / "model" / f"e{i:>04}.pth"
-                    checkpoint_file = self.out_folder / "checkpoint" / f"e{i:>04}.pth"
-                    self.save_checkpoint(model_file, checkpoint_file)
-                    logger.info(f"Checkpoint saved to {checkpoint_file}")
-
-                # always save latest checkpoint and model
-                model_file = self.out_folder / f"latest_model.pth"
-                checkpoint_file = self.out_folder / "latest_checkpoint.pth"
-                self.save_checkpoint(model_file, checkpoint_file)
-                logger.debug(f"Latest checkpoint saved to {checkpoint_file}")
-
-                # TODO save the best model
+                self.run_one_epoch(i)
 
             logger.info(f"Training completed")
+
+    def run_one_epoch(self, step: int):
+        logger.info(f"----- Epoch [{step:>4}/{self.num_epochs}] -----")
+        train_ms = engine.train_one_epoch(
+            data_loader=self.train_loader,
+            augment=self.train_augment,
+            desc=self.TRAIN,
+            **self.__dict__,
+        )
+        self.lr_scheduler.step()
+        self.record_metrics(self.TRAIN, step, train_ms)
+        self.save_snapshot(self.TRAIN, step, self.train_loader.dataset)
+
+        val_ms = engine.eval_one_epoch(
+            data_loader=self.val_loader,
+            augment=self.val_augment,
+            desc=self.VAL,
+            **self.__dict__,
+        )
+        self.record_metrics(self.VAL, step, val_ms)
+        self.save_snapshot(self.VAL, step, self.val_loader.dataset)
+        self.export_checkpoints(step)
 
     def record_metrics(self, job: str, step: int, ms: MetricStore):
         for l in self.loggers:
@@ -158,27 +152,74 @@ class Trainer:
         for l in self.loggers:
             l.save_snapshot(job, step, snapshot)
 
-    def save_checkpoint(self, model_file: Path, checkpoint_file: Path):
-        """save model in separate file for inference"""
-        model_file.parent.mkdir(exist_ok=True)
-        checkpoint_file.parent.mkdir(exist_ok=True)
-        torch.save(self.model.state_dict(), model_file)
-        checkpoint: Checkpoint = {
-            "model_path": str(os.path.relpath(model_file, start=checkpoint_file)),
-            "optimizer_state_dict": self.optimizer.state_dict(),
-            "lr_scheduler_state_dict": self.lr_scheduler.state_dict(),
-            "scaler_state_dict": self.scaler.state_dict(),
-            "job_metrics": self.job_metrics,
-        }
-        torch.save(checkpoint, checkpoint_file)
+    def export_checkpoints(self, step: int):
+        if self.out_folder is None:
+            return
+
+        if (step + 1) % self.checkpoint_steps == 0:
+            paths = _get_save_paths(self.out_folder, None, step)
+            _save_checkpoint(self, *paths)
+
+        # always save latest checkpoint and model
+        paths = _get_save_paths(self.out_folder, "latest", None)
+        _save_checkpoint(self, *paths)
+
+        # save the best model
+        best_index = _find_best_index(self.best_by, self.job_metrics[self.VAL])
+        if best_index == step:
+            logging.info("Found new best model")
+            paths = _get_save_paths(self.out_folder, "best", None)
+            _save_checkpoint(self, *paths)
 
     def load_checkpoint(self, checkpoint_file: Path):
         logger.info(f"Loading checkpoint in {checkpoint_file}")
         checkpoint: Checkpoint = torch.load(checkpoint_file, weights_only=True)
         model_path = checkpoint_file / checkpoint["model_path"]
         model_state_dict = torch.load(model_path, weights_only=True)
+
         self.model.load_state_dict(model_state_dict)
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         self.lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state_dict"])
         self.scaler.load_state_dict(checkpoint["scaler_state_dict"])
         self.job_metrics = checkpoint["job_metrics"]
+
+
+def _get_save_paths(folder: Path, name: str | None, step: int | None):
+    """Provide exactly one of `name` or `step`
+
+    If step is provided, it will return path in a subfolder
+    """
+    if folder is None:
+        return
+    if name is None == step is None:
+        raise ValueError("Accept exactly one of name or step")
+    model_file = folder / f"{name}_model.pth"
+    checkpoint_file = folder / f"{name}_checkpoint.pth"
+    if step is not None:
+        model_file = folder / "model" / f"e{step:>04}.pth"
+        checkpoint_file = folder / "checkpoint" / f"e{step:>04}.pth"
+    return model_file, checkpoint_file
+
+
+def _save_checkpoint(trainer: Trainer, model_file: Path, checkpoint_file: Path):
+    model_file.parent.mkdir(exist_ok=True)
+    checkpoint_file.parent.mkdir(exist_ok=True)
+    torch.save(trainer.model.state_dict(), model_file)
+
+    checkpoint: Checkpoint = {
+        "model_path": str(os.path.relpath(model_file, start=checkpoint_file)),
+        "optimizer_state_dict": trainer.optimizer.state_dict(),
+        "lr_scheduler_state_dict": trainer.lr_scheduler.state_dict(),
+        "scaler_state_dict": trainer.scaler.state_dict(),
+        "job_metrics": trainer.job_metrics,
+    }
+    torch.save(checkpoint, checkpoint_file)
+
+
+def _find_best_index(best_by: str, metrics_list: dict[str, list[float]]) -> int:
+    """`best_by` is like [max|min]:[metric]"""
+    algo_name, metric_key = best_by.split(":")
+    algo = {"max": np.argmax, "min": np.argmin}[algo_name]
+    metrics = metrics_list[metric_key]
+    best_index = algo(metrics)
+    return best_index

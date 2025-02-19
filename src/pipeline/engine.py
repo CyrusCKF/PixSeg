@@ -7,8 +7,9 @@ from typing import Sequence
 import torch
 import tqdm
 from PIL import Image
-from torch import GradScaler, Tensor, nn, optim
+from torch import GradScaler, Tensor, nn
 from torch.nn import functional as F
+from torch.optim import Optimizer
 from torch.utils import data
 from torchvision.transforms import v2
 from torchvision.transforms.v2 import functional as TF
@@ -56,7 +57,7 @@ def train_one_epoch(
     data_loader: data.DataLoader,
     augment: v2.Transform,
     criterion: nn.Module,
-    optimizer: optim.Optimizer,
+    optimizer: Optimizer,
     scaler: GradScaler,
     device: str,
     learn_step: int,
