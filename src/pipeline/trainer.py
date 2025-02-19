@@ -80,7 +80,7 @@ class Trainer:
     best_by: str = "max:miou"
     """In the form of `"[max|min]:[metric]"` where metric must be a valid key in metrics"""
     loggers: Sequence[Logger] = ()
-    num_snapshot_data = 4
+    data_per_snapshot = 4
 
     def __post_init__(self):
         if len(self.labels) != self.num_classes:
@@ -146,7 +146,7 @@ class Trainer:
         snapshot = engine.create_snapshot(
             dataset=dataset,
             augment=self.val_augment,
-            num_samples=self.num_snapshot_data,
+            num_data=self.data_per_snapshot,
             **self.__dict__,
         )
         for l in self.loggers:
@@ -167,7 +167,7 @@ class Trainer:
         # save the best model
         best_index = _find_best_index(self.best_by, self.job_metrics[self.VAL])
         if best_index == step:
-            logging.info("Found new best model")
+            logger.info("Found new best model")
             paths = _get_save_paths(self.out_folder, "best", None)
             _save_checkpoint(self, *paths)
 

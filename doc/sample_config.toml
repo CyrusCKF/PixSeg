@@ -1,0 +1,50 @@
+# Notes: 
+# 1. When batch_size > 1, make sure images all have same size OR pad_crop_size to not "none" 
+# 2. If batch_size = 1, some model using batch norm in train mode will raise error
+
+[model]
+model = "deeplabv3_mobilenet_v3_large"
+params = {}
+
+[data.dataset]
+dataset = "VOC"
+root = "../dataset"
+pad_crop_size = [500, 500] # "none", "max" or tuple of (H, W)
+params = {}
+
+[data.train_loader]
+params = { batch_size = 2, drop_last = true, num_workers = 0, shuffle = true }
+
+[data.augment]
+params = { hflip = 0.5 }
+
+[criterion]
+criterion = "CrossEntropyLoss"
+class_weight = "none"
+aux_weight = 1
+params = {}
+
+[optimizer]
+optimizer = "SGD"
+effective_batch_size = 32                                   # must be multiple of batch_size
+params = { lr = 3e-4, momentum = 0.9, weight_decay = 5e-4 }
+
+[lr_scheduler]
+lr_scheduler = "StepLR"
+params = { step_size = 10, gamma = 0.5 }
+
+[misc]
+out_folder = "../runs"
+epochs = 30
+device = "cuda"
+
+[trainer]
+# checkpoint = "../runs/exp1/latest_checkpoint.pth" # uncomment to resume checkpoint
+checkpoint_steps = 1
+best_by = "max:miou"
+data_per_snapshot = 4
+
+[log.wandb]
+# api_key = "ssssssssssssssssssssssssssssssssssssssss" # uncomment to use wandb
+# run_id = "ssssssss" # uncomment to resume run
+params = { project = "Semantic Segmentation", job_type = "train", dir = "../" }
