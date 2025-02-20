@@ -9,13 +9,16 @@ sys.path.append(str((Path(__file__) / "..").resolve()))
 from learning_zoo import CRITERION_ZOO
 
 
-def register_criterion(callable: Callable[..., _Loss]) -> Callable[..., _Loss]:
-    key = callable.__name__
-    if key in CRITERION_ZOO:
-        raise ValueError(f"An entry is already registered under the name '{key}'.")
-    CRITERION_ZOO[key] = callable
-    return callable
+def register_criterion(name: str | None = None):
+    def wrapper(callable: Callable[..., _Loss]) -> Callable[..., _Loss]:
+        key = callable.__name__ if name is None else name
+        if key in CRITERION_ZOO:
+            raise ValueError(f"An entry is already registered under the name '{key}'.")
+        CRITERION_ZOO[key] = callable
+        return callable
+
+    return wrapper
 
 
-register_criterion(CrossEntropyLoss)
+register_criterion()(CrossEntropyLoss)
 # TODO make Dice Loss, Focal loss

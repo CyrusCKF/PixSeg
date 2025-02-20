@@ -11,9 +11,7 @@ T = TypeVar("T", bound=nn.Module)
 P = ParamSpec("P")
 
 
-def register_model(
-    name: str | None = None,
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
+def register_model(name: str | None = None):
     def wrapper(func: Callable[P, T]) -> Callable[P, T]:
         key = func.__name__ if name is None else name
         if key in MODEL_ZOO:

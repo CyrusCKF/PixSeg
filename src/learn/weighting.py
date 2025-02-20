@@ -10,12 +10,15 @@ sys.path.append(str((Path(__file__) / "..").resolve()))
 from learning_zoo import CLASS_WEIGHTINGS, WeightingFunc
 
 
-def register_weighting(func: WeightingFunc) -> WeightingFunc:
-    key = func.__name__
-    if key in CLASS_WEIGHTINGS:
-        raise ValueError(f"An entry is already registered under the name '{key}'.")
-    CLASS_WEIGHTINGS[key] = func
-    return func
+def register_weighting(name: str | None = None):
+    def wrapper(func: WeightingFunc) -> WeightingFunc:
+        key = func.__name__ if name is None else name
+        if key in CLASS_WEIGHTINGS:
+            raise ValueError(f"An entry is already registered under the name '{key}'.")
+        CLASS_WEIGHTINGS[key] = func
+        return func
+
+    return wrapper
 
 
 def count_classes(dataset: Dataset, num_classes: int):
@@ -29,30 +32,30 @@ def count_classes(dataset: Dataset, num_classes: int):
     return class_counts
 
 
-@register_weighting
+@register_weighting()
 def none(*args):
     return None
 
 
-@register_weighting
+@register_weighting()
 def class_frequency(dataset: Dataset, num_classes: int):
     class_freq = count_classes(dataset, num_classes)
     return class_freq.median() / class_freq.float()
 
 
-@register_weighting
+@register_weighting()
 def sqrt_frequency(dataset: Dataset, num_classes: int):
     class_freq = count_classes(dataset, num_classes)
     return class_freq.median().sqrt() / class_freq.sqrt()
 
 
-@register_weighting
+@register_weighting()
 def log_frequency(dataset: Dataset, num_classes: int):
     class_freq = count_classes(dataset, num_classes)
     return class_freq.median().log() / class_freq.log()
 
 
-@register_weighting
+@register_weighting()
 def effective_number(dataset: Dataset, num_classes: int):
     """Custom implementation of Effective Number of Samples
 

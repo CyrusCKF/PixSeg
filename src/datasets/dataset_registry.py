@@ -17,7 +17,7 @@ def register_dataset(
     name: str | None = None,
     meta_key: str | None = None,
     num_classes: int | None = None,
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
+):
     """Can be used on functions or classes"""
 
     def wrapper(callable: Callable[P, T]) -> Callable[P, T]:

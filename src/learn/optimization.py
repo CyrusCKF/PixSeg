@@ -12,14 +12,17 @@ T = TypeVar("T", bound=Optimizer)
 P = ParamSpec("P")
 
 
-def register_optimizer(callable: Callable[P, T]) -> Callable[P, T]:
-    key = callable.__name__
-    if key in OPTIMIZER_ZOO:
-        raise ValueError(f"An entry is already registered under the name '{key}'.")
-    OPTIMIZER_ZOO[key] = callable
-    return callable
+def register_optimizer(name: str | None = None):
+    def wrapper(callable: Callable[P, T]) -> Callable[P, T]:
+        key = callable.__name__ if name is None else name
+        if key in OPTIMIZER_ZOO:
+            raise ValueError(f"An entry is already registered under the name '{key}'.")
+        OPTIMIZER_ZOO[key] = callable
+        return callable
+
+    return wrapper
 
 
-register_optimizer(optim.Adam)
-register_optimizer(optim.SGD)
+register_optimizer()(optim.Adam)
+register_optimizer()(optim.SGD)
 # TODO implement padam

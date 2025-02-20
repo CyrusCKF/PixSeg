@@ -12,15 +12,18 @@ T = TypeVar("T", bound=LRScheduler)
 P = ParamSpec("P")
 
 
-def register_lr_scheduler(callable: Callable[P, T]) -> Callable[P, T]:
-    key = callable.__name__
-    if key in LR_SCHEDULER_ZOO:
-        raise ValueError(f"An entry is already registered under the name '{key}'.")
-    LR_SCHEDULER_ZOO[key] = callable
-    return callable
+def register_lr_scheduler(name: str | None = None):
+    def wrapper(callable: Callable[P, T]) -> Callable[P, T]:
+        key = callable.__name__ if name is None else name
+        if key in LR_SCHEDULER_ZOO:
+            raise ValueError(f"An entry is already registered under the name '{key}'.")
+        LR_SCHEDULER_ZOO[key] = callable
+        return callable
+
+    return wrapper
 
 
-register_lr_scheduler(lr_scheduler.StepLR)
-register_lr_scheduler(lr_scheduler.PolynomialLR)
-register_lr_scheduler(lr_scheduler.OneCycleLR)
-register_lr_scheduler(lr_scheduler.CosineAnnealingLR)
+register_lr_scheduler()(lr_scheduler.StepLR)
+register_lr_scheduler()(lr_scheduler.PolynomialLR)
+register_lr_scheduler()(lr_scheduler.OneCycleLR)
+register_lr_scheduler()(lr_scheduler.CosineAnnealingLR)

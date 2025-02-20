@@ -1,6 +1,6 @@
 from typing import Callable
 
-from torch import Tensor, nn
+from torch import Tensor
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler

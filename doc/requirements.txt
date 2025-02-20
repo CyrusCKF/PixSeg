@@ -11,3 +11,4 @@ python-dotenv==1.0.1
 jupyter==1.1.1
 Flask==3.1.0
 Flask-Cors==5.0.0
+pytest-8.3.4

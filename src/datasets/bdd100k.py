@@ -11,6 +11,8 @@ from dataset_registry import register_dataset
 
 @register_dataset({"split": "train"}, {"split": "val"}, meta_key="Cityscapes")
 class BDD100K(Dataset):
+    """Dataset for bdd100k"""
+
     def __init__(
         self,
         root: Path | str,
