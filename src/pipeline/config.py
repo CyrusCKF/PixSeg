@@ -54,7 +54,7 @@ class Config:
         """Generated subfolder to log the run"""
         if self._out_folder is None:
             runs_folder = self.config["paths"]["runs_folder"]
-            sub_folder = datetime.now().strftime("%Y%d%m-%H%M%S")
+            sub_folder = datetime.now().strftime("%Y%m%d_%H%M%S")
             self._out_folder = Path(runs_folder) / sub_folder
         return self._out_folder
 

@@ -22,7 +22,7 @@ params = { hflip = 0.5 }
 [criterion]
 criterion = "CrossEntropyLoss"
 class_weight = "none"
-aux_weight = 1
+aux_weight = 0
 params = {}
 
 [optimizer]

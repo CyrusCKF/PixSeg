@@ -1,16 +1,20 @@
 import logging
+import os
 import sys
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Sequence
 
 import PIL.Image
-import wandb
 import wandb.wandb_run
+
+import wandb
 
 sys.path.append(str((Path(__file__) / "../../..").resolve()))
 from src.utils import visual
 from src.utils.metrics import MetricStore
+
+logger = logging.getLogger(__name__)
 
 
 @contextmanager
@@ -118,6 +122,7 @@ class WandbLogger(Logger):
 
         Set :param:`run_id` to resume wandb logging
         """
+        os.environ["WANDB_SILENT"] = "true"  # set it before init to avoid logging that
         self.api_key = api_key
         self.run_id = run_id
         self.kwargs = kwargs
@@ -139,6 +144,7 @@ class WandbLogger(Logger):
             settings=settings,
             **self.kwargs,
         )
+        logger.info(f"Wandb run id: {self.run.id}")
 
     def __exit__(self, type, value, traceback) -> None:
         wandb.finish()
