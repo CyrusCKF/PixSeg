@@ -158,12 +158,12 @@ class Config:
         wandb_table = self.config["log"]["wandb"]
         wandb_key = wandb_table.get("api_key")
         if wandb_key is not None:
+            run_id = wandb_table.get("run_id")
             wandb_params = wandb_table["params"]
-            config = {}
+            config_to_log = {k: v for k, v in self.config.items() if k != "log"}
+            config = _flatten_nested_dict(config_to_log)
             loggers.append(
-                WandbLogger(
-                    wandb_key, wandb_table.get("run_id"), config=config, **wandb_params
-                )
+                WandbLogger(wandb_key, run_id, config=config, **wandb_params)
             )
 
         return loggers
@@ -192,6 +192,46 @@ class Config:
         if self.checkpoint_file is not None:
             trainer.load_checkpoint(self.checkpoint_file)
         return trainer
+
+
+def _flatten_nested_dict(nested_dict: dict[str, Any], sep="/") -> dict[str, Any]:
+    """Flatten dict by only keeping its last keys while ensuring it is
+    still uniquely identifiable
+
+    Example:
+    ```
+    { "A": { "AA": 1 }, "B": { "BB": { "DUP": 2 } }, "DUP": 3 }
+    => { "AA": 1, "BB/DUP": 2, "DUP": 3 }
+    ```
+    """
+
+    def flatten(
+        dict_: dict[str, Any], parent_key: tuple[str, ...] = ()
+    ) -> dict[tuple[str, ...], Any]:
+        flattened: dict[tuple[str, ...], Any] = {}
+        for k, v in dict_.items():
+            new_key = parent_key + (k,)
+            if isinstance(v, dict):
+                flattened.update(flatten(v, new_key))
+            else:
+                flattened[new_key] = v
+        return flattened
+
+    flattened_dict = flatten(nested_dict)
+
+    result = {}
+    for full_key, value in flattened_dict.items():
+        # try all shortened key
+        for i in range(1, len(full_key) + 1):
+            short_key = full_key[-i:]
+            other_keys = {k[-i:] for k in flattened_dict.keys() if k != full_key}
+            if short_key in other_keys:
+                continue
+
+            joined = sep.join(short_key)
+            result[joined] = value
+            break
+    return result
 
 
 def _test():

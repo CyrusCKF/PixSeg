@@ -147,7 +147,6 @@ class WandbLogger(Logger):
         if self.run is None:
             return
         metrics = ms.summarize()
-        # TODO can return nested dict?
         metrics_with_job = {job + "/" + k: v for k, v in metrics.items()}
         self.run.log(metrics_with_job, step=step)
 

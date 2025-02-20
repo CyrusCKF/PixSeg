@@ -70,13 +70,14 @@ class DataTransform(v2.Compose):
         super().__init__([ImageMaskTransform(image_transform, mask_transform)])
 
 
-# TODO add blur transform
 class DataAugment(v2.Compose):
     """Default data augmentations for semantic segmentation"""
 
     def __init__(
         self,
         hflip=0.0,
+        blur_size=1,
+        blur_sigma: Sequence[float] = (0.1, 2.0),
         color_jitter: Sequence[float] = (0, 0, 0, 0),
         perspective=0.0,
         rotation=0.0,
@@ -87,8 +88,8 @@ class DataAugment(v2.Compose):
 
         Example for training:
         ```
-        DataAugment(hflip = 0.5, color_jitter = (0.1, 0.1, 0.1), perspective = 0.2,
-        rotation = 30, auto_contrast = 0.5)
+        DataAugment(hflip = 0.5, color_jitter = (0.1, 0.1, 0.1), blur_size=9,
+        perspective = 0.2, rotation = 30, auto_contrast = 0.5)
         ```
 
         Args:
@@ -101,6 +102,7 @@ class DataAugment(v2.Compose):
                 v2.RandomRotation(degrees=rotation),  # type: ignore
                 v2.ColorJitter(*color_jitter),
                 v2.RandomAutocontrast(auto_contrast),
+                v2.GaussianBlur(blur_size, blur_sigma),
                 v2.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STDDEV),
             ]
         )

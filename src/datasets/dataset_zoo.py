@@ -36,8 +36,7 @@ class DatasetMeta:
         colors: Sequence[tuple[int, int, int]] | None = None,
     ) -> "DatasetMeta":
         final_labels = labels or [f"Class {i}" for i in range(num_classes)]
-        # TODO better default colors
-        final_colors = colors or [(255, 255, 255) for i in range(num_classes)]
+        final_colors = colors or _generate_voc_palette(num_classes)
         return DatasetMeta(num_classes, ignore_index, final_labels, final_colors)
 
 
@@ -72,3 +71,21 @@ DATASET_ZOO: dict[str, DatasetEntry] = {}
 
 All dataset constructors must accept kwargs `root (Path|str)` and `transforms (Callable|None)`
 """
+
+
+def _generate_voc_palette(num_classes) -> Sequence[tuple[int, int, int]]:
+    """Reference https://github.com/yassouali/pytorch-segmentation/blob/master/utils/palette.py"""
+    palette: list[tuple[int, int, int]] = []
+    for j in range(0, num_classes):
+        color = [0, 0, 0]
+        lab = j
+        i = 0
+        while lab > 0:
+            color[0] |= ((lab >> 0) & 1) << (7 - i)
+            color[1] |= ((lab >> 1) & 1) << (7 - i)
+            color[2] |= ((lab >> 2) & 1) << (7 - i)
+            i = i + 1
+            lab >>= 3
+        color_tuple = (color[0], color[1], color[2])
+        palette.append(color_tuple)
+    return palette
