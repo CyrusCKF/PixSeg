@@ -15,7 +15,7 @@ def register_model(name: str | None = None):
     def wrapper(func: Callable[P, T]) -> Callable[P, T]:
         key = func.__name__ if name is None else name
         if key in MODEL_ZOO:
-            raise ValueError(f"An entry is already registered under the name '{key}'.")
+            raise KeyError(f"An entry is already registered under the key '{key}'.")
         MODEL_ZOO[key] = func
         return func
 

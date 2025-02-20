@@ -4,7 +4,8 @@ from pathlib import Path
 from torchvision import datasets
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from dataset_registry import register_dataset, register_metadata
+from dataset_registry import register_dataset
+from dataset_zoo import DatasetMeta
 
 # fmt: off
 VOC_LABELS = ("background",
@@ -31,26 +32,25 @@ CITYSCAPES_COLORS = ((128, 64, 128), (244, 35, 232), (70, 70, 70), (102, 102, 15
                      (0, 0, 230), (119, 11, 32), (0, 0, 0))
 # fmt: on
 
-register_metadata("VOC", 21, 255, VOC_LABELS, VOC_COLORS)
-register_metadata("Cityscapes", 20, 255, CITYSCAPES_LABELS, CITYSCAPES_COLORS)
-
 # register builtin datasets
 register_dataset(
     {"image_set": "train"},
     {"image_set": "val"},
+    meta=DatasetMeta(21, 255, VOC_LABELS, VOC_COLORS),
     name="VOC",
 )(datasets.VOCSegmentation)
 
 register_dataset(
     {"mode": "segmentation", "image_set": "train"},
     {"mode": "segmentation", "image_set": "val"},
+    meta="VOC",
     name="SBD",
-    meta_key="VOC",
 )(datasets.SBDataset)
 
 register_dataset(
     {"target_type": "semantic", "split": "train"},
     {"target_type": "semantic", "split": "val"},
+    meta=DatasetMeta(20, 255, CITYSCAPES_LABELS, CITYSCAPES_COLORS),
 )(datasets.Cityscapes)
 
 
@@ -60,7 +60,6 @@ def _test():
     entry = DATASET_ZOO["VOC"]
     train_dataset = entry.construct_train(root=r"dataset", year="2007")
     print(len(train_dataset))  # type: ignore
-    print(entry.meta)
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ def register_optimizer(name: str | None = None):
     def wrapper(callable: Callable[P, T]) -> Callable[P, T]:
         key = callable.__name__ if name is None else name
         if key in OPTIMIZER_ZOO:
-            raise ValueError(f"An entry is already registered under the name '{key}'.")
+            raise KeyError(f"An entry is already registered under the key '{key}'.")
         OPTIMIZER_ZOO[key] = callable
         return callable
 

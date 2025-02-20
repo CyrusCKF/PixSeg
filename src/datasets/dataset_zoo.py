@@ -48,15 +48,6 @@ class DatasetEntry:
     constructor: Callable[..., Dataset]
     train_kwargs: dict
     val_kwargs: dict
-    meta_key: str | None = None
-    num_classes: int | None = None
-    """Please access via `meta.num_classes`"""
-
-    def __post_init__(self):
-        if self.num_classes is not None and self.meta_key is not None:
-            raise ValueError(
-                "Exactly one of num_classes or meta_key should not be None"
-            )
 
     def construct_train(
         self, root: Path | str, transforms: Callable | None = None, *args, **kwargs
@@ -72,16 +63,10 @@ class DatasetEntry:
             root=root, transforms=transforms, *args, **kwargs, **self.val_kwargs
         )
 
-    @property
-    def meta(self) -> DatasetMeta:
-        if self.meta_key is not None:
-            return DATASET_METADATA[self.meta_key]
-        if self.num_classes is not None:
-            return DatasetMeta.default(self.num_classes)
-        raise ValueError("No valid meta")
 
+DATASET_METADATA: dict[str, DatasetMeta | str] = {}
+"""Mapping of meta key to the metadata or key of other metadata"""
 
-DATASET_METADATA: dict[str, DatasetMeta] = {}
 DATASET_ZOO: dict[str, DatasetEntry] = {}
 """Mapping of dataset name to `DatabaseEntry`
 

@@ -21,7 +21,7 @@ from logger import LocalLogger, Logger, WandbLogger
 from trainer import Trainer
 
 sys.path.append(str((Path(__file__) / "../../..").resolve()))
-from src.datasets import DATASET_METADATA, DATASET_ZOO, DatasetMeta
+from src.datasets import DATASET_ZOO, DatasetMeta, resolve_metadata
 from src.learn import CLASS_WEIGHTINGS, CRITERION_ZOO, LR_SCHEDULER_ZOO, OPTIMIZER_ZOO
 from src.models import MODEL_ZOO
 from src.utils.transform import DataAugment, DataTransform
@@ -38,9 +38,8 @@ class Config:
     @property
     def dataset_meta(self) -> DatasetMeta:
         if self._dataset_meta is None:
-            self._dataset_meta = DATASET_ZOO[
-                self.config["data"]["dataset"]["dataset"]
-            ].meta
+            key = self.config["data"]["dataset"]["dataset"]
+            self._dataset_meta = resolve_metadata(key)
         return self._dataset_meta
 
     @property

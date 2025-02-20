@@ -14,7 +14,7 @@ def register_weighting(name: str | None = None):
     def wrapper(func: WeightingFunc) -> WeightingFunc:
         key = func.__name__ if name is None else name
         if key in CLASS_WEIGHTINGS:
-            raise ValueError(f"An entry is already registered under the name '{key}'.")
+            raise KeyError(f"An entry is already registered under the key '{key}'.")
         CLASS_WEIGHTINGS[key] = func
         return func
 
