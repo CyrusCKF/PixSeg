@@ -3,6 +3,7 @@ import os
 import sys
 from contextlib import ExitStack
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Sequence, TypedDict
 
@@ -16,13 +17,14 @@ from torch.utils import data
 from torchvision.transforms import v2
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from logger import Logger
+from logger import LocalLogger, Logger, WandbLogger
 from trainer import Trainer
 
 sys.path.append(str((Path(__file__) / "../../..").resolve()))
 from src.datasets import DATASET_METADATA, DATASET_ZOO, DatasetMeta
 from src.learn import CLASS_WEIGHTINGS, CRITERION_ZOO, LR_SCHEDULER_ZOO, OPTIMIZER_ZOO
 from src.models import MODEL_ZOO
+from src.utils.transform import DataAugment, DataTransform
 
 logger = logging.getLogger(__name__)
 
@@ -31,15 +33,7 @@ class Config:
     def __init__(self, config: dict[str, Any]) -> None:
         self.config = config
         self._dataset_meta: DatasetMeta | None = None
-
-    def build_model(self) -> nn.Module:
-        num_classes = self.dataset_meta.num_classes
-        return MODEL_ZOO[self.config["model"]["model"]](
-            num_classes=num_classes, **self.config["model"]["params"]
-        )
-
-    def build_datasets(self) -> tuple[data.Dataset, data.Dataset]:
-        raise NotImplementedError()
+        self._out_folder: Path | None = None
 
     @property
     def dataset_meta(self) -> DatasetMeta:
@@ -49,43 +43,141 @@ class Config:
             ].meta
         return self._dataset_meta
 
-    def build_data_loaders(self) -> tuple[data.DataLoader, data.DataLoader]:
-        raise NotImplementedError()
-
-    def build_data_augments(self) -> tuple[v2.Transform, v2.Transform]:
-        raise NotImplementedError()
-
-    def build_criterion(self) -> Loss:
-        raise NotImplementedError()
-
-    def build_optimizer(self, model: nn.Module) -> Optimizer:
-        raise NotImplementedError()
-
-    def build_lr_scheduler(self, optimizer: Optimizer) -> LRScheduler:
-        raise NotImplementedError()
-
-    def get_trainer_params(self) -> dict[str, Any]:
-        raise NotImplementedError()
-
-    def build_loggers(self) -> list[Logger]:
-        raise NotImplementedError()
-
     @property
     def checkpoint_file(self) -> Path | None:
-        raise NotImplementedError()
+        checkpoint_file = self.config["paths"].get("checkpoint")
+        if checkpoint_file is None:
+            return None
+        return Path(checkpoint_file)
 
     @property
-    def run_folder(self) -> Path:
+    def out_folder(self) -> Path:
         """Generated subfolder to log the run"""
-        raise NotImplementedError()
+        if self._out_folder is None:
+            runs_folder = self.config["paths"]["runs_folder"]
+            sub_folder = datetime.now().strftime("%Y%d%m-%H%M%S")
+            self._out_folder = Path(runs_folder) / sub_folder
+        return self._out_folder
+
+    @property
+    def device(self) -> str:
+        device = self.config["trainer"]["device"]
+        if device != "auto":
+            return device
+        return "cuda" if torch.cuda.is_available() else "cpu"
+
+    def build_model(self) -> nn.Module:
+        model_name = self.config["model"]["model"]
+        params = self.config["model"]["params"]
+        num_classes = self.dataset_meta.num_classes
+        model = MODEL_ZOO[model_name](num_classes=num_classes, **params)
+
+        state_file = self.config["model"].get("state_file")
+        if state_file is not None:
+            if "weights" in params:
+                raise ValueError("Expect at most one of state_file or params.weights")
+            state_dict = torch.load(state_file)
+            model.load_state_dict(state_dict)
+        return model
+
+    def build_datasets(self) -> tuple[data.Dataset, data.Dataset]:
+        ignore_index = self.dataset_meta.ignore_index
+        train_size = self.config["data"]["dataset"]["pad_crop_size"]
+        if train_size == "none":
+            train_size = None
+        train_transform = DataTransform(train_size, mask_fill=ignore_index)
+        val_transform = DataTransform(mask_fill=ignore_index)
+
+        entry = DATASET_ZOO[self.config["data"]["dataset"]["dataset"]]
+        params = self.config["data"]["dataset"]["params"]
+        train_dataset = entry.construct_train(transforms=train_transform, **params)
+        val_dataset = entry.construct_val(transforms=val_transform, **params)
+        return train_dataset, val_dataset
+
+    def build_data_loaders(
+        self, train_dataset: data.Dataset, val_dataset: data.Dataset
+    ) -> tuple[data.DataLoader, data.DataLoader]:
+        num_workers = self.config["data"]["loader"]["num_workers"]
+        train_params = self.config["data"]["loader"]["params"]
+        train_loader = data.DataLoader(
+            train_dataset, num_workers=num_workers, **train_params
+        )
+        val_loader = data.DataLoader(val_dataset, num_workers=num_workers)
+        return train_loader, val_loader
+
+    def build_data_augments(self) -> tuple[v2.Transform, v2.Transform]:
+        train_params = self.config["data"]["augment"]["params"]
+        train_augment = DataAugment(**train_params)
+        val_augment = DataAugment()
+        return train_augment, val_augment
+
+    def build_criterion(self, dataset: data.Dataset) -> Loss:
+        meta = self.dataset_meta
+        weighting = self.config["criterion"]["class_weight"]
+        weight = CLASS_WEIGHTINGS[weighting](dataset, meta.num_classes)
+
+        crit = self.config["criterion"]["criterion"]
+        params = self.config["criterion"]["params"]
+        return CRITERION_ZOO[crit](
+            ignore_index=meta.ignore_index, weight=weight, **params
+        )
+
+    def build_optimizer(self, model: nn.Module) -> Optimizer:
+        optim = self.config["optimizer"]["optimizer"]
+        params = self.config["optimizer"]["params"]
+        return OPTIMIZER_ZOO[optim](model.parameters(), **params)
+
+    def build_lr_scheduler(self, optimizer: Optimizer) -> LRScheduler:
+        lr = self.config["lr_scheduler"]["lr_scheduler"]
+        params = self.config["lr_scheduler"]["params"]
+        return LR_SCHEDULER_ZOO[lr](optimizer, **params)
+
+    def build_scaler(self) -> GradScaler:
+        params = self.config["scaler"]["params"]
+        return GradScaler(self.device, **params)
+
+    def get_trainer_params(self) -> dict[str, Any]:
+        params = self.config["trainer"]["params"]
+        params["loss_weight"] = {"aux": self.config["criterion"]["aux_weight"]}
+        params["out_folder"] = self.out_folder
+        params["device"] = self.device
+
+        batch_size = self.config["data"]["loader"]["params"].get("batch_size", 1)
+        effective_batch_size = self.config["optimizer"]["effective_batch_size"]
+        if effective_batch_size % batch_size != 0:
+            raise ValueError(
+                "effective_batch_size must be a multiple of batch_size,"
+                f" but got {effective_batch_size=}, {batch_size=}"
+            )
+        params["learn_step"] = effective_batch_size // batch_size
+
+        return params
+
+    def build_loggers(self) -> list[Logger]:
+        loggers: list[Logger] = [LocalLogger(self.out_folder, self.dataset_meta.labels)]
+
+        wandb_table = self.config["log"]["wandb"]
+        wandb_key = wandb_table.get("api_key")
+        if wandb_key is not None:
+            wandb_params = wandb_table["params"]
+            config = {}
+            loggers.append(
+                WandbLogger(
+                    wandb_key, wandb_table.get("run_id"), config=config, **wandb_params
+                )
+            )
+
+        return loggers
 
     def to_trainer(self) -> Trainer:
         model = self.build_model()
-        train_loader, val_loader = self.build_data_loaders()
+        train_dataset, val_dataset = self.build_datasets()
+        train_loader, val_loader = self.build_data_loaders(train_dataset, val_dataset)
         train_augment, val_augment = self.build_data_augments()
-        criterion = self.build_criterion()
+        criterion = self.build_criterion(train_dataset)
         optimizer = self.build_optimizer(model)
         lr_scheduler = self.build_lr_scheduler(optimizer)
+        scaler = self.build_scaler()
         loggers = self.build_loggers()
 
         trainer_kwargs = self.get_trainer_params()
@@ -95,7 +187,7 @@ class Config:
         # fmt: off
         trainer = Trainer(
             model, train_loader, train_augment, val_loader, val_augment, criterion, optimizer, 
-            lr_scheduler, GradScaler(), loggers=loggers, **trainer_kwargs, **dataset_meta_kwargs
+            lr_scheduler, scaler, loggers=loggers, **trainer_kwargs, **dataset_meta_kwargs
         )
         # fmt: on
         if self.checkpoint_file is not None:
@@ -107,6 +199,7 @@ def _test():
     import toml
 
     config_toml = toml.load(r"doc\sample_config.toml")
+    config_toml["data"]["dataset"]["params"]["root"] = r"dataset"
     config = Config(config_toml)
     trainer = config.to_trainer()
 

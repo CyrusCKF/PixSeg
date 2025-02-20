@@ -80,7 +80,7 @@ class Trainer:
     best_by: str = "max:miou"
     """In the form of `"[max|min]:[metric]"` where metric must be a valid key in metrics"""
     loggers: Sequence[Logger] = ()
-    data_per_snapshot = 4
+    data_per_snapshot: int = 4
 
     def __post_init__(self):
         if len(self.labels) != self.num_classes:

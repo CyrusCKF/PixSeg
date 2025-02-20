@@ -4,16 +4,17 @@
 
 [model]
 model = "deeplabv3_mobilenet_v3_large"
+# state_file = './model_pth'             # uncomment to load model state dict
 params = {}
 
 [data.dataset]
 dataset = "VOC"
-root = "../dataset"
-pad_crop_size = [500, 500] # "none", "max" or tuple of (H, W)
-params = {}
+pad_crop_size = [500, 500]                      # "none", or tuple of (H, W)
+params = { root = '..\dataset', year = "2007" }
 
-[data.train_loader]
-params = { batch_size = 2, drop_last = true, num_workers = 0, shuffle = true }
+[data.loader]
+num_workers = 0
+params = { batch_size = 2, drop_last = true, shuffle = true }
 
 [data.augment]
 params = { hflip = 0.5 }
@@ -31,20 +32,20 @@ params = { lr = 3e-4, momentum = 0.9, weight_decay = 5e-4 }
 
 [lr_scheduler]
 lr_scheduler = "StepLR"
-params = { step_size = 10, gamma = 0.5 }
+params = { step_size = 20, gamma = 0.1 }
 
-[trainer.params]
-num_epochs = 30
-device = "cuda"
-checkpoint_steps = 1
-best_by = "max:miou"
-data_per_snapshot = 4
+[scaler]
+params = {}
+
+[trainer]
+device = "auto"
+params = { num_epochs = 50, checkpoint_steps = 5 }
 
 [paths]
-out_folder = "../runs"
-# checkpoint = "../runs/exp1/latest_checkpoint.pth" # uncomment to resume checkpoint
+runs_folder = '..\runs'
+# checkpoint = '../runs/exp1/latest_checkpoint.pth' # uncomment to resume checkpoint
 
 [log.wandb]
 # api_key = "ssssssssssssssssssssssssssssssssssssssss" # uncomment to use wandb
 # run_id = "ssssssss" # uncomment to resume run
-params = { project = "Semantic Segmentation", job_type = "train", dir = "../" }
+params = { project = "Semantic Segmentation", job_type = "train", dir = '..\' }
