@@ -2,6 +2,10 @@
 runs/
 wandb/
 
+*.toml
+!sample_config.toml
+!pyproject.toml
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
