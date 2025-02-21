@@ -1,11 +1,7 @@
 from torchvision.models._utils import IntermediateLayerGetter
 
 
-def replace_getter_layer(
-    getter: IntermediateLayerGetter, last_out: bool, second_last_aux: bool
-):
+def replace_layer_name(getter: IntermediateLayerGetter, index_to_name: dict[int, str]):
     keys = list(getter.return_layers.keys())
-    if last_out:
-        getter.return_layers[keys[-1]] = "out"
-    if second_last_aux is not None:
-        getter.return_layers[keys[-2]] = "aux"
+    for i, n in index_to_name.items():
+        getter.return_layers[keys[i]] = n

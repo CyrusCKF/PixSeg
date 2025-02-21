@@ -38,7 +38,7 @@ def _test():
     from torchinfo import summary
 
     fake_input = torch.rand([4, 3, 224, 224])
-    model = resnet.resnet101()
+    model = resnet.resnet101(replace_stride_with_dilation=[False, True, True])
     backbone = ResNetBackbone(model)
     summary(backbone, input_data=fake_input)
     print(backbone)
