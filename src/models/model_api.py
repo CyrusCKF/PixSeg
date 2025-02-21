@@ -10,11 +10,12 @@ from enum import Enum
 from typing import Any, Callable, Sequence, TypeVar
 
 from torch import nn
-from torchvision.transforms.v2 import Identity, Transform
+from torchvision.transforms.v2 import Transform
 
 
 @dataclass
 class SegWeights:
+    # TODO make sure weights are not gpu tensor
     url: str
     transforms: Callable[..., Transform]
     labels: Sequence[str]

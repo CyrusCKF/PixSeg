@@ -1,15 +1,11 @@
 import logging
-import os
 import sys
-from contextlib import ExitStack
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Sequence, TypedDict
+from typing import Any
 
-import numpy as np
 import torch
-from torch import GradScaler, nn
+from torch import GradScaler, Tensor, nn
 from torch.nn.modules.loss import _Loss as Loss
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
@@ -67,14 +63,20 @@ class Config:
 
     def build_model(self) -> nn.Module:
         model_name = self.config["model"]["model"]
-        params = self.config["model"]["params"]
+        params: dict = self.config["model"]["params"]
+        weights = params.pop("weights", None)
         num_classes = self.dataset_meta.num_classes
-        model = MODEL_ZOO[model_name](num_classes=num_classes, **params)
-
         state_file = self.config["model"].get("state_file")
-        if state_file is not None:
-            if "weights" in params:
+
+        model = MODEL_ZOO[model_name](num_classes=num_classes, **params)
+        if weights is not None:
+            if state_file is not None:
                 raise ValueError("Expect at most one of state_file or params.weights")
+            # TODO access weights state dict directly instead of creating another model
+            model_with_weights = MODEL_ZOO[model_name](weights=weights, **params)
+            safe_transfer_state_dict(model, model_with_weights.state_dict())
+
+        if state_file is not None:
             state_dict = torch.load(state_file)
             model.load_state_dict(state_dict)
         return model
@@ -235,8 +237,33 @@ def _flatten_nested_dict(nested_dict: dict[str, Any], sep="/") -> dict[str, Any]
     return result
 
 
+def safe_transfer_state_dict(model: nn.Module, state_dict: dict[str, Tensor]):
+    logger.info("Transferring weights to model ...")
+    filtered_state_dict = {}
+    mismatch_keys = []
+    for k, v in state_dict.items():
+        model_v = model.state_dict().get(k, None)
+        if isinstance(model_v, Tensor) and model_v.shape != v.shape:
+            mismatch_keys.append(k)
+        else:
+            filtered_state_dict[k] = v
+
+    missing_keys, unexpected_keys = model.load_state_dict(
+        filtered_state_dict, strict=False
+    )
+    if not missing_keys and not unexpected_keys and len(mismatch_keys) == 0:
+        logger.info("All weights are transferred successfully")
+    else:
+        logger.info(
+            f"Transfer completed. Found abnormal keys:"
+            f" {missing_keys=}, {unexpected_keys=}, {mismatch_keys}"
+        )
+
+
 def _test():
     import toml
+
+    logging.basicConfig(level=logging.DEBUG)
 
     config_toml = toml.load(r"doc\sample_config.toml")
     config_toml["data"]["dataset"]["params"]["root"] = r"dataset"
