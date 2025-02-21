@@ -7,7 +7,7 @@ from torchvision.models.resnet import ResNet34_Weights
 from torchvision.models.segmentation import fcn
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from backbones import ResNetBackbone
+from backbones import ResNetBackbone, replace_getter_layer
 from model_registry import register_model
 
 register_model()(segmentation.fcn_resnet50)
@@ -29,6 +29,8 @@ def fcn_resnet34(
 
     backbone_model = resnet.resnet34(weights=weights_backbone, progress=progress)
     backbone = ResNetBackbone(backbone_model)
+    replace_getter_layer(backbone, True, aux_loss)
+
     channels = backbone.layer_channels()
     aux_classifier = fcn.FCNHead(channels["aux"], num_classes) if aux_loss else None
     classifier = fcn.FCNHead(channels["out"], num_classes)

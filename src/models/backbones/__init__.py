@@ -7,3 +7,4 @@ the whole segmentation model.
 """
 
 from .resnet import ResNetBackbone
+from .utils import replace_getter_layer
