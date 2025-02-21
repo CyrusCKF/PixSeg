@@ -13,7 +13,7 @@ from torch.utils import data
 from torchvision.transforms import v2
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from logger import LocalLogger, Logger, WandbLogger
+from logger import LocalLogger, Logger, TensorboardLogger, WandbLogger
 from trainer import Trainer
 
 sys.path.append(str((Path(__file__) / "../../..").resolve()))
@@ -66,19 +66,22 @@ class Config:
         params: dict = self.config["model"]["params"]
         weights = params.pop("weights", None)
         num_classes = self.dataset_meta.num_classes
-        state_file = self.config["model"].get("state_file")
-
         model = MODEL_ZOO[model_name](num_classes=num_classes, **params)
+
+        # safely load model state dict
+        state_dict = None
+        state_file = self.config["model"].get("state_file")
+        if weights is not None and state_file is not None:
+            raise ValueError("Expect at most one of state_file or params.weights")
         if weights is not None:
-            if state_file is not None:
-                raise ValueError("Expect at most one of state_file or params.weights")
             # TODO access weights state dict directly instead of creating another model
             model_with_weights = MODEL_ZOO[model_name](weights=weights, **params)
-            safe_transfer_state_dict(model, model_with_weights.state_dict())
-
+            state_dict = model_with_weights.state_dict()
         if state_file is not None:
             state_dict = torch.load(state_file)
-            model.load_state_dict(state_dict)
+
+        if state_dict is not None:
+            safe_transfer_state_dict(model, state_dict)
         return model
 
     def build_datasets(self) -> tuple[data.Dataset, data.Dataset]:
@@ -165,9 +168,13 @@ class Config:
             wandb_params = wandb_table["params"]
             config_to_log = {k: v for k, v in self.config.items() if k != "log"}
             config = _flatten_nested_dict(config_to_log)
-            loggers.append(
-                WandbLogger(wandb_key, run_id, config=config, **wandb_params)
-            )
+            wandb_logger = WandbLogger(wandb_key, run_id, config=config, **wandb_params)
+            loggers.append(wandb_logger)
+
+        tensorboard_table = self.config["log"]["tensorboard"]
+        tensorboard_enabled = tensorboard_table["enabled"]
+        if tensorboard_enabled:
+            loggers.append(TensorboardLogger(**tensorboard_table["params"]))
 
         return loggers
 

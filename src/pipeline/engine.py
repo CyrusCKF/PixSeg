@@ -6,17 +6,17 @@ from typing import Sequence
 
 import torch
 import tqdm
-from PIL import Image
 from torch import GradScaler, Tensor, nn
 from torch.nn import functional as F
 from torch.optim import Optimizer
 from torch.utils import data
 from torchvision.transforms import v2
 from torchvision.transforms.v2 import functional as TF
+from torchvision.utils import make_grid
 
 sys.path.append(str((Path(__file__) / "../../..").resolve()))
 from src.utils.metrics import MetricStore
-from src.utils.visual import combine_images, draw_mask_on_image
+from src.utils.visual import draw_mask_on_image
 
 
 def forward_batch(
@@ -143,7 +143,7 @@ def eval_one_epoch(
 
 
 @torch.no_grad()
-def create_snapshot(
+def create_snapshots(
     model: nn.Module,
     dataset: data.Dataset[tuple[Tensor, Tensor]],
     augment: v2.Transform,
@@ -151,14 +151,14 @@ def create_snapshot(
     colors: Sequence[tuple[int, int, int]],
     num_data: int = 1,
     **kwargs,
-) -> Image.Image:
-    """Return a grid image, with columns of original images, ground truth
-    overlay and prediction overlay.
+) -> list[Tensor]:
+    """Return images in sets of three: original, ground truth overlay,
+    and prediction overlay, from left to right.
 
     :param:`model` is assumed to be on :param:`device`
     """
     model.eval()
-    tensors: list[Tensor] = []
+    snapshots: list[Tensor] = []
     image_indices = random.sample(range(len(dataset)), num_data)  # type: ignore
     for i in image_indices:
         image, mask = dataset[i]
@@ -169,8 +169,6 @@ def create_snapshot(
         image = images[0]
         mask_overlay = draw_mask_on_image(image, masks[0], colors)
         pred_overlay = draw_mask_on_image(image, preds[0], colors)
-        tensors += [image, mask_overlay, pred_overlay]
-
-    # group drawings into grid
-    grid = combine_images(tensors, nrow=3)
-    return TF.to_pil_image(grid)
+        image_set = make_grid([image, mask_overlay, pred_overlay])
+        snapshots.append((image_set))
+    return snapshots

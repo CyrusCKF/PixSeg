@@ -1,13 +1,20 @@
 import logging
 import os
+import socket
 import sys
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Sequence
 
-import PIL.Image
-import wandb
+import numpy as np
 import wandb.wandb_run
+from PIL.Image import Image
+from torch import Tensor
+from torch.utils.tensorboard.writer import SummaryWriter
+from torchvision.transforms.v2 import functional as TF
+
+import wandb
 
 sys.path.append(str((Path(__file__) / "../../..").resolve()))
 from src.utils import visual
@@ -52,7 +59,10 @@ def init_logging(log_file: Path | None):
 
 
 class Logger:
-    """Base class for all loggers"""
+    """Base class for all loggers
+
+    Contain hooks that can be overriden to save results during training
+    """
 
     def __enter__(self):
         pass
@@ -60,16 +70,29 @@ class Logger:
     def __exit__(self, type, value, traceback) -> None:
         pass
 
-    def log_running_metrics(self, metrics: dict[str, dict[str, list[float]]]):
-        """Called whenever there is an update in metrics of each job"""
+    def on_running_metrics_updated(
+        self, job_metrics: dict[str, dict[str, list[float]]]
+    ):
+        """
+        Args:
+            job_metrics: Mapping from each job to all metrics from the start of the training
+        """
         pass
 
-    def log_epoch_metrics(self, job: str, step: int, ms: MetricStore):
-        """Called every epoch for each job"""
+    def on_job_epoch_ended(
+        self, job: str, step: int, cm: np.ndarray, metrics: dict[str, float]
+    ):
+        """
+        Args:
+            job: usually `train` or `val`
+            cm: confusion matrix
+        """
         pass
 
-    def save_snapshot(self, job: str, step: int, snapshot: PIL.Image.Image):
-        """Called every epoch for each job"""
+    def on_snapshots_created(self, job: str, step: int, snapshots: list[Tensor]):
+        """Snapshots are created after running each job epoch"""
+
+    def on_checkpoint_saved(self, model_file: Path, checkpoint_file: Path):
         pass
 
 
@@ -84,40 +107,46 @@ class LocalLogger(Logger):
         if self.folder is not None:
             self.folder.mkdir(parents=True, exist_ok=True)
 
-    def log_running_metrics(self, metrics: dict[str, dict[str, list[float]]]):
+    def on_running_metrics_updated(
+        self, job_metrics: dict[str, dict[str, list[float]]]
+    ):
         if self.folder is None:
             return
-        visual.plot_running_metrics(metrics)
+        visual.plot_running_metrics(job_metrics)
         visual.exhibit_figure(save_to=self.folder / "running_metrics.png")
 
-    def log_epoch_metrics(self, job: str, step: int, ms: MetricStore):
+    def on_job_epoch_ended(
+        self, job: str, step: int, cm: np.ndarray, metrics: dict[str, float]
+    ):
         if self.folder is None:
             return
         job_folder = self.folder / job
         job_folder.mkdir(exist_ok=True)
 
-        cm = ms.confusion_matrix
         normalized_cm = cm / cm.sum(axis=1, keepdims=True)
         visual.plot_confusion_matrix(normalized_cm, self.labels)
         visual.exhibit_figure(save_to=job_folder / f"cm_{step:>04}.png")
 
-    def save_snapshot(self, job: str, step: int, snapshot: PIL.Image.Image):
+    def on_snapshots_created(self, job: str, step: int, snapshots: list[Tensor]):
         if self.folder is None:
             return
         job_folder = self.folder / job
         job_folder.mkdir(exist_ok=True)
         path = self.folder / job / f"snapshot_{step:>04}.png"
-        snapshot.save(path)
+        combined = visual.combine_images(snapshots)
+        combined_pil: Image = TF.to_pil_image(combined)
+        combined_pil.save(path)
 
 
 class WandbLogger(Logger):
+    # TODO also save snapshots optionally
     def __init__(
         self,
         api_key: str | None,  # used for resuming
         run_id: str | None = None,
         **kwargs,
     ) -> None:
-        """See :func:`wandb.init` for all supported parameters
+        """See :func:`wandb.init` for all supported kwargs
 
         Set :param:`run_id` to resume wandb logging
         """
@@ -148,9 +177,52 @@ class WandbLogger(Logger):
     def __exit__(self, type, value, traceback) -> None:
         wandb.finish()
 
-    def log_epoch_metrics(self, job: str, step: int, ms: MetricStore):
+    def on_job_epoch_ended(
+        self, job: str, step: int, cm: np.ndarray, metrics: dict[str, float]
+    ):
         if self.run is None:
             return
-        metrics = ms.summarize()
         metrics_with_job = {job + "/" + k: v for k, v in metrics.items()}
         self.run.log(metrics_with_job, step=step)
+
+
+class TensorboardLogger(Logger):
+    def __init__(
+        self, parent_dir: str | None = None, save_images=True, **kwargs
+    ) -> None:
+        """See :class:`SummaryWriter` for all supported kwargs"""
+        super().__init__()
+        self.parent_dir = parent_dir
+        if "log_dir" in kwargs and self.parent_dir is not None:
+            logger.info("log_dir found in Tensorboard params, ignoring parent_dir")
+            self.parent_dir = None
+        self.save_images = save_images
+        self.writer: SummaryWriter | None = None
+        self.kwargs = kwargs
+
+    def __enter__(self):
+        if self.parent_dir is not None:
+            # use the same default naming strategy in SummaryWriter
+            current_time = datetime.now().strftime("%b%d_%H-%M-%S")
+            subfolder_name = f"{current_time}_{socket.gethostname()}"
+            self.kwargs["log_dir"] = str(Path(self.parent_dir) / subfolder_name)
+        self.writer = SummaryWriter(**self.kwargs)
+
+    def __exit__(self, type, value, traceback) -> None:
+        if self.writer is not None:
+            self.writer.flush()
+            self.writer.close()
+
+    def on_job_epoch_ended(
+        self, job: str, step: int, cm: np.ndarray, metrics: dict[str, float]
+    ):
+        if self.writer is None:
+            return
+        for k, v in metrics.items():
+            self.writer.add_scalar(job + "/" + k, v, step)
+
+    def on_snapshots_created(self, job: str, step: int, snapshots: list[Tensor]):
+        if self.writer is None or not self.save_images:
+            return
+        for i, s in enumerate(snapshots):
+            self.writer.add_image(f"{job}_p{i}", s, step)

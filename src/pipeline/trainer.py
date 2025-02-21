@@ -80,7 +80,7 @@ class Trainer:
     best_by: str = "max:miou"
     """In the form of `"[max|min]:[metric]"` where metric must be a valid key in metrics"""
     loggers: Sequence[Logger] = ()
-    data_per_snapshot: int = 4
+    num_snapshots: int = 4
 
     def __post_init__(self):
         if len(self.labels) != self.num_classes:
@@ -130,9 +130,9 @@ class Trainer:
         self.export_checkpoints(step)
 
     def record_metrics(self, job: str, step: int, ms: MetricStore):
-        for l in self.loggers:
-            l.log_epoch_metrics(job, step, ms)
         metrics = ms.summarize()
+        for l in self.loggers:
+            l.on_job_epoch_ended(job, step, ms.confusion_matrix, metrics)
         metrics_text = "| ".join(f"{k}={v:.4f}" for k, v in metrics.items())
         logger.debug(f"Metrics for {job} {step}: {metrics_text}")
 
@@ -140,17 +140,17 @@ class Trainer:
             self.job_metrics[job].setdefault(k, [])
             self.job_metrics[job][k].append(v)
         for l in self.loggers:
-            l.log_running_metrics(self.job_metrics)
+            l.on_running_metrics_updated(self.job_metrics)
 
     def save_snapshot(self, job: str, step: int, dataset: data.Dataset):
-        snapshot = engine.create_snapshot(
+        snapshots = engine.create_snapshots(
             dataset=dataset,
             augment=self.val_augment,
-            num_data=self.data_per_snapshot,
+            num_data=self.num_snapshots,
             **self.__dict__,
         )
         for l in self.loggers:
-            l.save_snapshot(job, step, snapshot)
+            l.on_snapshots_created(job, step, snapshots)
 
     def export_checkpoints(self, step: int):
         if self.out_folder is None:
@@ -159,10 +159,14 @@ class Trainer:
         if (step + 1) % self.checkpoint_steps == 0:
             paths = _get_save_paths(self.out_folder, None, step)
             _save_checkpoint(self, *paths)
+            for l in self.loggers:
+                l.on_checkpoint_saved(*paths)
 
         # always save latest checkpoint and model
         paths = _get_save_paths(self.out_folder, "latest", None)
         _save_checkpoint(self, *paths)
+        for l in self.loggers:
+            l.on_checkpoint_saved(*paths)
 
         # save the best model
         best_index = _find_best_index(self.best_by, self.job_metrics[self.VAL])
@@ -170,6 +174,8 @@ class Trainer:
             logger.info("Found new best model")
             paths = _get_save_paths(self.out_folder, "best", None)
             _save_checkpoint(self, *paths)
+            for l in self.loggers:
+                l.on_checkpoint_saved(*paths)
 
     def load_checkpoint(self, checkpoint_file: Path):
         logger.info(f"Loading checkpoint in {checkpoint_file}")

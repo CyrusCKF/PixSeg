@@ -49,3 +49,7 @@ runs_folder = '..\runs'
 # api_key = "ssssssssssssssssssssssssssssssssssssssss" # uncomment to use wandb
 # run_id = "ssssssss" # uncomment to resume run
 params = { project = "Semantic Segmentation", job_type = "train", dir = '..\' }
+
+[log.tensorboard]
+enabled = false
+params = { parent_dir = '..\tensorboard' }
