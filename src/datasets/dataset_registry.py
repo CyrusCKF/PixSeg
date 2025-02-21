@@ -5,7 +5,7 @@ from typing import Callable, ParamSpec, TypeVar
 from torch.utils.data import Dataset
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from dataset_zoo import DATASET_METADATA, DATASET_ZOO, DatasetEntry, DatasetMeta
+from dataset_api import DATASET_METADATA, DATASET_ZOO, DatasetEntry, DatasetMeta
 
 T = TypeVar("T", bound=Dataset)
 P = ParamSpec("P")

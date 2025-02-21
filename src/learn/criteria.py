@@ -6,7 +6,7 @@ from torch.nn import CrossEntropyLoss
 from torch.nn.modules.loss import _Loss
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from learning_zoo import CRITERION_ZOO
+from learn_api import CRITERION_ZOO
 
 
 def register_criterion(name: str | None = None):

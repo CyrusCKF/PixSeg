@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 from torchvision.transforms.v2 import functional as TF
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from learning_zoo import CLASS_WEIGHTINGS, WeightingFunc
+from learn_api import CLASS_WEIGHTINGS, WeightingFunc
 
 
 def register_weighting(name: str | None = None):

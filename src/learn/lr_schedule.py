@@ -6,7 +6,7 @@ from torch.optim import lr_scheduler
 from torch.optim.lr_scheduler import LRScheduler
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from learning_zoo import LR_SCHEDULER_ZOO
+from learn_api import LR_SCHEDULER_ZOO
 
 T = TypeVar("T", bound=LRScheduler)
 P = ParamSpec("P")

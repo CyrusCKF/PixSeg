@@ -4,8 +4,8 @@ from pathlib import Path
 from torchvision import datasets
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
+from dataset_api import DatasetMeta
 from dataset_registry import register_dataset
-from dataset_zoo import DatasetMeta
 
 # fmt: off
 VOC_LABELS = ("background",

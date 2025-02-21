@@ -15,7 +15,7 @@ register_model()(segmentation.lraspp_mobilenet_v3_large)
 
 def _test():
     import torchinfo
-    from model_zoo import MODEL_ZOO
+    from model_api import MODEL_ZOO
 
     print(MODEL_ZOO)
     builder = MODEL_ZOO["deeplabv3_mobilenet_v3_large"]

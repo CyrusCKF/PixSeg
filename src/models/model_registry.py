@@ -5,7 +5,7 @@ from typing import Callable, ParamSpec, TypeVar
 from torch import nn
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from model_zoo import MODEL_ZOO
+from model_api import MODEL_ZOO
 
 T = TypeVar("T", bound=nn.Module)
 P = ParamSpec("P")

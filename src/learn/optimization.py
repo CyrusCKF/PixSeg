@@ -6,7 +6,7 @@ from torch import optim
 from torch.optim import Optimizer
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
-from learning_zoo import OPTIMIZER_ZOO
+from learn_api import OPTIMIZER_ZOO
 
 T = TypeVar("T", bound=Optimizer)
 P = ParamSpec("P")
