@@ -6,6 +6,11 @@ from torchvision.models._utils import IntermediateLayerGetter
 
 
 class ResNetBackbone(IntermediateLayerGetter):
+    """
+    For resnet50, resnet101 and resnet152, recommend to build with
+    `replace_stride_with_dilation=[False, True, True]`
+    """
+
     def __init__(self, model: resnet.ResNet) -> None:
         layers = [f"layer{i+1}" for i in range(4)]
         return_layers = {layer: layer for layer in layers}
@@ -28,52 +33,20 @@ class ResNetBackbone(IntermediateLayerGetter):
         return num_channels
 
 
-def resnet18(weights=resnet.ResNet18_Weights.DEFAULT, **kwargs):
-    model = resnet.resnet18(weights=weights, **kwargs)
-    backbone = ResNetBackbone(model)
-    return backbone
-
-
-def resnet34(weights=resnet.ResNet34_Weights.DEFAULT, **kwargs):
-    model = resnet.resnet34(weights=weights, **kwargs)
-    backbone = ResNetBackbone(model)
-    return backbone
-
-
-def resnet50(weights=resnet.ResNet50_Weights.DEFAULT, **kwargs):
-    kwargs["replace_stride_with_dilation"] = [False, True, True]
-    model = resnet.resnet50(weights=weights, **kwargs)
-    backbone = ResNetBackbone(model)
-    return backbone
-
-
-def resnet101(weights=resnet.ResNet101_Weights.DEFAULT, **kwargs):
-    kwargs["replace_stride_with_dilation"] = [False, True, True]
-    model = resnet.resnet101(weights=weights, **kwargs)
-    backbone = ResNetBackbone(model)
-    return backbone
-
-
-def resnet152(weights=resnet.ResNet152_Weights.DEFAULT, **kwargs):
-    kwargs["replace_stride_with_dilation"] = [False, True, True]
-    model = resnet.resnet152(weights=weights, **kwargs)
-    backbone = ResNetBackbone(model)
-    return backbone
-
-
 def _test():
     import torch
     from torchinfo import summary
 
     fake_input = torch.rand([4, 3, 224, 224])
-    model = resnet101()
-    summary(model, input_data=fake_input)
-    print(model)
-    fake_output = model(fake_input)
+    model = resnet.resnet101()
+    backbone = ResNetBackbone(model)
+    summary(backbone, input_data=fake_input)
+    print(backbone)
+    fake_output = backbone(fake_input)
     for k, v in fake_output.items():
         print(k, v.dtype, v.shape)
 
-    print(model.layer_channels())
+    print(backbone.layer_channels())
 
 
 if __name__ == "__main__":

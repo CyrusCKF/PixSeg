@@ -105,9 +105,10 @@ class Config:
         return train_loader, val_loader
 
     def build_data_augments(self) -> tuple[v2.Transform, v2.Transform]:
+        ignore_index = self.dataset_meta.ignore_index
         train_params = self.config["data"]["augment"]["params"]
-        train_augment = DataAugment(**train_params)
-        val_augment = DataAugment()
+        train_augment = DataAugment(**train_params, mask_fill=ignore_index)
+        val_augment = DataAugment(mask_fill=ignore_index)
         return train_augment, val_augment
 
     def build_criterion(self, dataset: data.Dataset) -> Loss:

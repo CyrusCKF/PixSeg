@@ -6,4 +6,4 @@ Most backbone should have pretrained weights; otherwise it is too impractical to
 the whole segmentation model.
 """
 
-from .resnet import ResNetBackbone, resnet18, resnet34, resnet50, resnet101, resnet152
+from .resnet import ResNetBackbone
