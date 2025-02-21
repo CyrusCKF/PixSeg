@@ -204,7 +204,8 @@ def _get_save_paths(folder: Path, name: str | None, step: int | None):
 def _save_checkpoint(trainer: Trainer, model_file: Path, checkpoint_file: Path):
     model_file.parent.mkdir(exist_ok=True)
     checkpoint_file.parent.mkdir(exist_ok=True)
-    torch.save(trainer.model.state_dict(), model_file)
+    model_state_dict = {k: v.cpu() for k, v in trainer.model.state_dict().items()}
+    torch.save(model_state_dict, model_file)
 
     checkpoint: Checkpoint = {
         "model_path": str(os.path.relpath(model_file, start=checkpoint_file)),

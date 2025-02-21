@@ -1,3 +1,3 @@
 from .fcn import fcn_resnet34
 from .model_registry import MODEL_ZOO, register_model
-from .pytorch_models import _test as __
+from .pytorch_models import __import as __

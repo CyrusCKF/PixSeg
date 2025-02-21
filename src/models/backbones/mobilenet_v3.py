@@ -36,24 +36,3 @@ class MobileNetV3Backbone(IntermediateLayerGetter):
             else:
                 raise ValueError(f"Unknown block {key} of type {type(module)}")
         return num_channels
-
-
-def _test():
-    import torch
-    from torchinfo import summary
-
-    fake_input = torch.rand([4, 3, 224, 224])
-    model = mobilenetv3.mobilenet_v3_large(dilated=True)
-    backbone = MobileNetV3Backbone(model)
-    print(backbone)
-
-    summary(backbone, input_data=fake_input)
-    fake_output = backbone(fake_input)
-    for k, v in fake_output.items():
-        print(k, v.dtype, v.shape)
-
-    print(backbone.layer_channels())
-
-
-if __name__ == "__main__":
-    _test()

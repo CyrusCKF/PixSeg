@@ -9,3 +9,4 @@ the whole segmentation model.
 from .mobilenet_v3 import MobileNetV3Backbone
 from .resnet import ResNetBackbone
 from .utils import replace_layer_name
+from .vgg import VGGBackbone

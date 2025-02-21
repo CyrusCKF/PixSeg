@@ -6,9 +6,8 @@ from pathlib import Path
 from typing import Sequence
 
 import PIL.Image
-import wandb.wandb_run
-
 import wandb
+import wandb.wandb_run
 
 sys.path.append(str((Path(__file__) / "../../..").resolve()))
 from src.utils import visual
@@ -155,12 +154,3 @@ class WandbLogger(Logger):
         metrics = ms.summarize()
         metrics_with_job = {job + "/" + k: v for k, v in metrics.items()}
         self.run.log(metrics_with_job, step=step)
-
-
-def _test():
-    with init_logging(Path("run.log")):
-        logging.info("Hi")
-
-
-if __name__ == "__main__":
-    _test()
