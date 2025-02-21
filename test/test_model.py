@@ -7,7 +7,7 @@ import torch
 from torch import Tensor, nn
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
-from src.models import MODEL_ZOO
+from src.models import *
 
 
 def test_registry():
@@ -26,3 +26,4 @@ def test_model(model_builder: Callable[..., nn.Module]):
 
 if __name__ == "__main__":
     print(MODEL_ZOO)
+    fcn_resnet34(weights=FCN_ResNet34_Weights.DEFAULT)

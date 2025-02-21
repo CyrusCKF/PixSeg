@@ -1,8 +1,8 @@
 import sys
 from pathlib import Path
 
-import torch
 from torch import nn
+from torch.hub import load_state_dict_from_url
 from torchvision.models import *  # type: ignore
 from torchvision.models import segmentation
 from torchvision.models.segmentation import fcn
@@ -40,13 +40,13 @@ def fcn_resnet34(
 ) -> nn.Module:
     weights_model = FCN_ResNet34_Weights.resolve(weights)
     if num_classes is None:
-        num_classes = 21 if weights_model is None else len(weights_model.value.labels)
+        num_classes = 21 if weights_model is None else len(weights_model.labels)
     if weights_model is not None:
         weights_backbone = None
-        if num_classes != len(weights_model.value.labels):
+        if num_classes != len(weights_model.labels):
             raise ValueError(
                 f"Model weights {weights_model} expect number of classes"
-                f"={len(weights_model.value.labels)}, but got {num_classes}"
+                f"={len(weights_model.labels)}, but got {num_classes}"
             )
 
     backbone_model = resnet34(weights=weights_backbone, progress=progress)
@@ -59,9 +59,7 @@ def fcn_resnet34(
     model = fcn.FCN(backbone, classifier, aux_classifier)
 
     if weights_model is not None:
-        state_dict = torch.hub.load_state_dict_from_url(
-            weights_model.value.url, progress=progress
-        )
+        state_dict = load_state_dict_from_url(weights_model.url, progress=progress)
         model.load_state_dict(state_dict)
     return model
 
