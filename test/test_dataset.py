@@ -23,7 +23,7 @@ def test_registry():
 def dataset_roots(file="test/dataset_root.toml") -> dict[str, str]:
     root_file = Path(file)
     if not root_file.is_file():
-        raise RuntimeError(
+        raise ValueError(
             f"Dataset root file {root_file} not found."
             f" Please copy from doc/pytest_dataset_root.toml"
         )

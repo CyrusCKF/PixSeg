@@ -6,7 +6,7 @@ Most backbone should have pretrained weights; otherwise it is too impractical to
 the whole segmentation model.
 """
 
+from .backbone_utils import replace_layer_name
 from .mobilenet_v3 import MobileNetV3Backbone
 from .resnet import ResNetBackbone
-from .utils import replace_layer_name
 from .vgg import VGGBackbone

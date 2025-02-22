@@ -20,10 +20,16 @@ def test_model(model_builder: Callable[..., nn.Module]):
     fake_input = torch.rand([4, 3, 32, 56])
     fake_output: dict[str, Tensor] = model(fake_input)
     for k, v in fake_output.items():
+        assert k in ("out", "aux")
         assert v.size(0) == fake_input.size(0)
         assert v.shape[2:] == fake_input.shape[2:]
 
 
 if __name__ == "__main__":
+    import torchinfo
+
     print(MODEL_ZOO)
-    fcn_resnet34(weights=FCN_ResNet34_Weights.DEFAULT)
+
+    model = pspnet_resnet50()
+    print(torchinfo.summary(model, [4, 3, 32, 56]))
+    print(model)

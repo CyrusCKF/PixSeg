@@ -5,7 +5,7 @@ from torch import nn
 from torch.hub import load_state_dict_from_url
 from torchvision.models import *  # type: ignore
 from torchvision.models import segmentation
-from torchvision.models.segmentation import fcn
+from torchvision.models.segmentation.fcn import FCN, FCNHead
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
 from backbones import *
@@ -54,9 +54,9 @@ def fcn_resnet34(
     replace_layer_name(backbone, {-1: "out", -2: "aux"})
 
     channels = backbone.layer_channels()
-    aux_classifier = fcn.FCNHead(channels["aux"], num_classes) if aux_loss else None
-    classifier = fcn.FCNHead(channels["out"], num_classes)
-    model = fcn.FCN(backbone, classifier, aux_classifier)
+    aux_classifier = FCNHead(channels["aux"], num_classes) if aux_loss else None
+    classifier = FCNHead(channels["out"], num_classes)
+    model = FCN(backbone, classifier, aux_classifier)
 
     if weights_model is not None:
         state_dict = load_state_dict_from_url(weights_model.url, progress=progress)
@@ -84,9 +84,9 @@ def fcn_mobilenet_v3_large(
     replace_layer_name(backbone, {-1: "out", -4: "aux"})
 
     channels = backbone.layer_channels()
-    aux_classifier = fcn.FCNHead(channels["aux"], num_classes) if aux_loss else None
-    classifier = fcn.FCNHead(channels["out"], num_classes)
-    return fcn.FCN(backbone, classifier, aux_classifier)
+    aux_classifier = FCNHead(channels["aux"], num_classes) if aux_loss else None
+    classifier = FCNHead(channels["out"], num_classes)
+    return FCN(backbone, classifier, aux_classifier)
 
 
 @register_model()
@@ -107,6 +107,6 @@ def fcn_vgg16(
     replace_layer_name(backbone, {-1: "out", -2: "aux"})
 
     channels = backbone.layer_channels()
-    aux_classifier = fcn.FCNHead(channels["aux"], num_classes) if aux_loss else None
-    classifier = fcn.FCNHead(channels["out"], num_classes)
-    return fcn.FCN(backbone, classifier, aux_classifier)
+    aux_classifier = FCNHead(channels["aux"], num_classes) if aux_loss else None
+    classifier = FCNHead(channels["out"], num_classes)
+    return FCN(backbone, classifier, aux_classifier)
