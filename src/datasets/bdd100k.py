@@ -9,6 +9,7 @@ sys.path.append(str((Path(__file__) / "..").resolve()))
 from dataset_registry import register_dataset
 
 
+# TODO BDD100K
 @register_dataset({"split": "train"}, {"split": "val"}, meta="Cityscapes")
 class BDD100K(Dataset):
     """Dataset for bdd100k"""
@@ -17,11 +18,11 @@ class BDD100K(Dataset):
         self,
         root: Path | str,
         split: Literal["train", "val"],
-        transform: Transform | None = None,
+        transforms: Transform | None = None,
     ) -> None:
         self.split = split
         self.root = Path(root)
-        self.transform = transform
+        self.transforms = transforms
         self.image_files, self.mask_files = self._populate_files()
 
     def _populate_files(self) -> tuple[list[Path], list[Path]]:

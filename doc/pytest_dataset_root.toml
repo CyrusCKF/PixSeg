@@ -1,0 +1,6 @@
+# root of datasets for testing
+# empty string is neglected
+BDD100K = ''
+Cityscapes = ''
+SBD = ''
+VOC = ''

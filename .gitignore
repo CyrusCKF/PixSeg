@@ -1,7 +1,7 @@
 /dataset/
 
 *.toml
-!sample_config.toml
+!doc/*.toml
 !pyproject.toml
 
 runs/

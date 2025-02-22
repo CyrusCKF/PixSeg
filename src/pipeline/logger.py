@@ -187,10 +187,16 @@ class WandbLogger(Logger):
 
 
 class TensorboardLogger(Logger):
+    # TODO use add_hparams to log config
     def __init__(
         self, parent_dir: str | None = None, save_images=True, **kwargs
     ) -> None:
-        """See :class:`SummaryWriter` for all supported kwargs"""
+        """See :class:`SummaryWriter` for all supported kwargs
+
+        Args:
+            parent_dir: dir to store all tensorboard logs. Sub folder is generated using
+                the same scheme of :class:`SummaryWriter`
+        """
         super().__init__()
         self.parent_dir = parent_dir
         if "log_dir" in kwargs and self.parent_dir is not None:

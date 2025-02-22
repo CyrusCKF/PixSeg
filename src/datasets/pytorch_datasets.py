@@ -52,6 +52,7 @@ register_dataset(
     {"target_type": "semantic", "split": "val"},
     meta=DatasetMeta(20, 255, CITYSCAPES_LABELS, CITYSCAPES_COLORS),
 )(datasets.Cityscapes)
+# TODO Cityscapes with only train ids
 
 
 def _test():
