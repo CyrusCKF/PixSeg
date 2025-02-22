@@ -39,6 +39,7 @@ class Checkpoint(TypedDict):
     job_metrics: dict[str, dict[str, list[float]]]
 
 
+# TODO allows shortlisting metrics
 @dataclass
 class Trainer:
     """Repeatedly run training and validation loop, provide detailed logs

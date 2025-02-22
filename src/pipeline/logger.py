@@ -89,7 +89,7 @@ class Logger:
         """
         pass
 
-    def on_snapshots_created(self, job: str, step: int, snapshots: list[Tensor]):
+    def on_snapshots_created(self, job: str, step: int, snapshots: list[list[Tensor]]):
         """Snapshots are created after running each job epoch"""
 
     def on_checkpoint_saved(self, model_file: Path, checkpoint_file: Path):
@@ -127,13 +127,15 @@ class LocalLogger(Logger):
         visual.plot_confusion_matrix(normalized_cm, self.labels)
         visual.exhibit_figure(save_to=job_folder / f"cm_{step:>04}.png")
 
-    def on_snapshots_created(self, job: str, step: int, snapshots: list[Tensor]):
+    def on_snapshots_created(self, job: str, step: int, snapshots: list[list[Tensor]]):
         if self.folder is None:
             return
         job_folder = self.folder / job
         job_folder.mkdir(exist_ok=True)
         path = self.folder / job / f"snapshot_{step:>04}.png"
-        combined = visual.combine_images(snapshots)
+
+        flat_snapshots = [s for ss in snapshots for s in ss]
+        combined = visual.combine_images(flat_snapshots, nrow=3)
         combined_pil: Image = TF.to_pil_image(combined)
         combined_pil.save(path)
 
@@ -227,8 +229,9 @@ class TensorboardLogger(Logger):
         for k, v in metrics.items():
             self.writer.add_scalar(job + "/" + k, v, step)
 
-    def on_snapshots_created(self, job: str, step: int, snapshots: list[Tensor]):
+    def on_snapshots_created(self, job: str, step: int, snapshots: list[list[Tensor]]):
         if self.writer is None or not self.save_images:
             return
-        for i, s in enumerate(snapshots):
-            self.writer.add_image(f"{job}_p{i}", s, step)
+        for i, image_set in enumerate(snapshots):
+            combined = visual.combine_images(image_set)
+            self.writer.add_image(f"{job}_p{i}", combined, step)

@@ -11,8 +11,6 @@ from torch.nn import functional as F
 from torch.optim import Optimizer
 from torch.utils import data
 from torchvision.transforms import v2
-from torchvision.transforms.v2 import functional as TF
-from torchvision.utils import make_grid
 
 sys.path.append(str((Path(__file__) / "../../..").resolve()))
 from src.utils.metrics import MetricStore
@@ -98,8 +96,12 @@ def train_one_epoch(
 
         preds = logits["out"].argmax(1)
         ms.store_results(masks, preds)
-        measures = {"loss": losses["out"].item(), "time": end_time - start_time}
-        ms.store_measures(images.size(0), measures)
+        batch_size = images.size(0)
+        measures = {
+            "loss": losses["out"].item() * batch_size,
+            "time": end_time - start_time,
+        }
+        ms.store_measures(batch_size, measures)
         if not silent:
             loader.set_postfix(ms.summarize())
 
@@ -134,8 +136,12 @@ def eval_one_epoch(
 
         preds = logits["out"].argmax(1)
         ms.store_results(masks, preds)
-        measures = {"loss": losses["out"].item(), "time": end_time - start_time}
-        ms.store_measures(images.size(0), measures)
+        batch_size = images.size(0)
+        measures = {
+            "loss": losses["out"].item() * batch_size,
+            "time": end_time - start_time,
+        }
+        ms.store_measures(batch_size, measures)
         if not silent:
             loader.set_postfix(ms.summarize())
 
@@ -151,14 +157,14 @@ def create_snapshots(
     colors: Sequence[tuple[int, int, int]],
     num_data: int = 1,
     **kwargs,
-) -> list[Tensor]:
-    """Return images in sets of three: original, ground truth overlay,
-    and prediction overlay, from left to right.
+) -> list[list[Tensor]]:
+    """Return list of images in sets of three: original, ground truth overlay,
+    and prediction overlay.
 
     :param:`model` is assumed to be on :param:`device`
     """
     model.eval()
-    snapshots: list[Tensor] = []
+    snapshots: list[list[Tensor]] = []
     image_indices = random.sample(range(len(dataset)), num_data)  # type: ignore
     for i in image_indices:
         image, mask = dataset[i]
@@ -169,6 +175,5 @@ def create_snapshots(
         image = images[0]
         mask_overlay = draw_mask_on_image(image, masks[0], colors)
         pred_overlay = draw_mask_on_image(image, preds[0], colors)
-        image_set = make_grid([image, mask_overlay, pred_overlay])
-        snapshots.append((image_set))
+        snapshots.append([image, mask_overlay, pred_overlay])
     return snapshots

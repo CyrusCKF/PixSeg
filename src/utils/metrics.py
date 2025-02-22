@@ -41,6 +41,7 @@ class MetricStore:
         self.confusion_matrix += results_cm
 
     def store_measures(self, num_data: int, measures: dict[str, float]):
+        """Expect the measures in "sum" of all data"""
         self.count_data += num_data
         for k, v in measures.items():
             self.measures[k] += v
