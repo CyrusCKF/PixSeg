@@ -14,7 +14,7 @@ from model_registry import register_model
 
 sys.path.append(str((Path(__file__) / "../../..").resolve()))
 from src.datasets.pytorch_datasets import VOC_LABELS
-from src.utils.transform import DataAugment
+from src.utils.transform import SegmentationAugment
 
 register_model()(segmentation.fcn_resnet50)
 register_model()(segmentation.fcn_resnet101)
@@ -23,7 +23,7 @@ register_model()(segmentation.fcn_resnet101)
 class FCN_ResNet34_Weights(SegWeightsEnum):
     VOC2012 = SegWeights(
         "https://github.com/CyrusCKF/segmentic-segmentation-toolkit/releases/download/fcn/fcn_resnet34-voc2012-500x500.pth",
-        DataAugment,
+        SegmentationAugment,
         VOC_LABELS,
         "Trained on PASCAL VOC 2012 dataset",
     )

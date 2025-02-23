@@ -38,7 +38,7 @@ class ImageMaskTransform(nn.Module):
         return image, mask
 
 
-class DataTransform(v2.Compose):
+class SegmentationTransform(v2.Compose):
     """The basic data transform for semantic segmentation task
 
     This ensures 2 things:
@@ -70,7 +70,7 @@ class DataTransform(v2.Compose):
         super().__init__([ImageMaskTransform(image_transform, mask_transform)])
 
 
-class DataAugment(v2.Compose):
+class SegmentationAugment(v2.Compose):
     """Default data augmentations for semantic segmentation"""
 
     def __init__(

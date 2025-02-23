@@ -17,7 +17,7 @@ from model_registry import register_model
 
 sys.path.append(str((Path(__file__) / "../../..").resolve()))
 from src.datasets.pytorch_datasets import VOC_LABELS
-from src.utils.transform import DataAugment
+from src.utils.transform import SegmentationAugment
 
 
 # TODO use custom implementation of _SimpleSegmentationModel

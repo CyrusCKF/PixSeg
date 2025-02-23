@@ -20,7 +20,7 @@ sys.path.append(str((Path(__file__) / "../../..").resolve()))
 from src.datasets import DATASET_ZOO, DatasetMeta, resolve_metadata
 from src.learn import CLASS_WEIGHTINGS, CRITERION_ZOO, LR_SCHEDULER_ZOO, OPTIMIZER_ZOO
 from src.models import MODEL_ZOO
-from src.utils.transform import DataAugment, DataTransform
+from src.utils.transform import SegmentationAugment, SegmentationTransform
 
 logger = logging.getLogger(__name__)
 
@@ -89,8 +89,8 @@ class Config:
         train_size = self.config["data"]["dataset"]["pad_crop_size"]
         if train_size == "none":
             train_size = None
-        train_transform = DataTransform(train_size, mask_fill=ignore_index)
-        val_transform = DataTransform(mask_fill=ignore_index)
+        train_transform = SegmentationTransform(train_size, mask_fill=ignore_index)
+        val_transform = SegmentationTransform(mask_fill=ignore_index)
 
         entry = DATASET_ZOO[self.config["data"]["dataset"]["dataset"]]
         params = self.config["data"]["dataset"]["params"]
@@ -112,8 +112,8 @@ class Config:
     def build_data_augments(self) -> tuple[v2.Transform, v2.Transform]:
         ignore_index = self.dataset_meta.ignore_index
         train_params = self.config["data"]["augment"]["params"]
-        train_augment = DataAugment(**train_params, mask_fill=ignore_index)
-        val_augment = DataAugment(mask_fill=ignore_index)
+        train_augment = SegmentationAugment(**train_params, mask_fill=ignore_index)
+        val_augment = SegmentationAugment(mask_fill=ignore_index)
         return train_augment, val_augment
 
     def build_criterion(self, dataset: data.Dataset) -> Loss:

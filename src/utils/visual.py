@@ -13,6 +13,7 @@ from torchvision.transforms import v2
 from torchvision.utils import draw_segmentation_masks, make_grid
 
 
+# TODO optionally not set extra_color on mask ouside the range
 def draw_mask_on_image(
     image: Tensor,
     mask: Tensor,

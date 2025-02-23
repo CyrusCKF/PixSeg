@@ -10,7 +10,7 @@ from torch.utils.data import Subset
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
 from src.datasets import DATASET_METADATA, DATASET_ZOO, resolve_metadata
-from src.utils.transform import DataTransform
+from src.utils.transform import SegmentationTransform
 
 
 def test_registry():
@@ -39,7 +39,7 @@ def test_dataset_with_format(name, dataset_roots, test_size=10):
     entry = DATASET_ZOO[name]
     meta = resolve_metadata(name)
     root = dataset_roots[name]
-    transform = DataTransform()
+    transform = SegmentationTransform()
     datasets = [
         entry.construct_train(root, transform),
         entry.construct_val(root, transform),
