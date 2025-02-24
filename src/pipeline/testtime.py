@@ -4,7 +4,9 @@ See `tasks/inference.ipynb` for demo and usage
 """
 
 import itertools
-from typing import Literal, Sequence
+import sys
+from pathlib import Path
+from typing import Sequence
 
 import numpy as np
 import torch
@@ -12,7 +14,11 @@ from pydensecrf.utils import unary_from_softmax
 from scipy.ndimage import binary_dilation, binary_erosion, gaussian_filter
 from torch import Tensor, nn
 from torch.nn import functional as F
+from torchvision.transforms import v2
 from torchvision.transforms.v2 import functional as TF
+
+sys.path.append(str((Path(__file__) / "../../..").resolve()))
+from src.utils.transform import RandomRescale
 
 
 def refine_prob_by_crf(prob: np.ndarray, image: Tensor | None, iter=5) -> np.ndarray:
@@ -123,86 +129,84 @@ def threshold_prob(prob: np.ndarray, threshold=0.5) -> dict[int, np.ndarray]:
     return thresholded_pred
 
 
+#####
+# region Augmentations
+#####
+
+
+class TesttimeAugmentations:
+    def __init__(
+        self,
+        scales: Sequence[float] = (1,),
+        hflips: Sequence[bool] = (False,),
+        vflips: Sequence[bool] = (False,),
+        rotations: Sequence[float] = (0,),
+        iter_product=False,
+    ) -> None:
+        """Generate multiple transformations to enhance testtime performance
+
+        Args:
+            iter_product: If `False`, the default augmentation will be modified the values one
+                at a time. If `True`, all combinations of the augmentations will be tested.
+                **WARNING** this will add significant time cost.
+        """
+        self.augment_combos = []
+        if iter_product:
+            self.augment_combos = list(
+                itertools.product(scales, hflips, vflips, rotations)
+            )
+        else:
+            default_combo = (1, False, False, 0)
+            mutations = [scales, hflips, vflips, rotations]
+            self.augment_combos.append(default_combo)
+            for i, mutation in enumerate(mutations):
+                self.augment_combos += [
+                    default_combo[:i] + m + default_combo[i + 1 :]
+                    for m in mutation
+                    if m != default_combo[i]
+                ]
+
+    def __iter__(self):
+        """Iterate all combinations of augmentations and its reverse, except for resizing back"""
+        for scale, hflip, vflip, rotation in self.augment_combos:
+            augment = v2.Compose(
+                [
+                    RandomRescale((scale, scale)),
+                    v2.RandomHorizontalFlip(1 if hflip else 0),
+                    v2.RandomVerticalFlip(1 if vflip else 0),
+                    v2.RandomRotation((rotation, rotation)),
+                ]
+            )
+            # need to reverse the order and value
+            reverse = v2.Compose(
+                [
+                    v2.RandomRotation((-rotation, -rotation)),
+                    v2.RandomVerticalFlip(1 if vflip else 0),
+                    v2.RandomHorizontalFlip(1 if hflip else 0),
+                ]
+            )
+            yield augment, reverse
+
+
 @torch.no_grad()
 def inference_with_augmentations(
-    model: nn.Module,
-    images: Tensor,
-    scales: Sequence[float] = (1,),
-    fliph=False,
-    flipv=False,
-    rotations: Sequence[float] = (0,),
-    iter_product=False,
+    model: nn.Module, images: Tensor, ttas: TesttimeAugmentations
 ) -> Tensor:
     """
     Args:
         images: Images after applying any preliminary augmentations
-        iter_product: If `True`, all combinations of the augmentations will be tested.
-            **WARNING** this will add significant time cost
 
     Returns:
         logits (Tensor (num_combos, batch_size, num_classes, height, width)):
             inference results of all combo
     """
-    hflips = [False, True] if fliph else [False]
-    vflips = [False, True] if flipv else [False]
-    augment_combos = []
-    if iter_product:
-        augment_combos = itertools.product(scales, hflips, vflips, rotations)
-    else:
-        augment_combos += [(s, False, False, 0) for s in scales]
-        augment_combos += [(1, h, False, 0) for h in hflips]
-        augment_combos += [(1, False, v, 0) for v in vflips]
-        augment_combos += [(1, False, False, r) for r in rotations]
-        augment_combos = list(set(augment_combos))
-
     results: list[Tensor] = []
     image_size = images.shape[2:]
-    for scale, hflip, vflip, rotation in augment_combos:
-        # apply augmentation
-        augmented_images = images.clone().detach()
-        augmented_images = F.interpolate(
-            augmented_images, scale_factor=scale, mode="bilinear"
-        )
-        if hflip:
-            augmented_images = TF.horizontal_flip(augmented_images)
-        if vflip:
-            augmented_images = TF.vertical_flip(augmented_images)
-        augmented_images = TF.rotate(augmented_images, rotation)
-
-        # reverse augmentation except resizing back
-        logits: Tensor = model(augmented_images)["out"]
-        logits = TF.rotate(logits, -rotation)
-        if vflip:
-            logits = TF.vertical_flip(logits)
-        if hflip:
-            logits = TF.horizontal_flip(logits)
+    for augment, reverse in ttas:
+        new_images = augment(images)
+        logits: Tensor = model(new_images)["out"]
+        logits = reverse(logits)
         logits = F.interpolate(logits, image_size, mode="bilinear")
         results.append(logits)
 
     return torch.stack(results)
-
-
-def aggregate_outputs(
-    outputs: Tensor,
-    method: Literal["mode", "max", "min", "mean"],
-) -> Tensor:
-    """Aggregate multiple results of logits, softmax or predictions on the same inputs
-
-    Usually, apply max/mean on logits or most on predictions
-
-    Args:
-        outputs (Tensor (num_results, batch_size, ?, height, width)): can be
-            logits, softmax or predictions
-
-    Returns:
-        results (Tensor (batch_size, ?, height, width)): aggregation
-    """
-    match method:
-        case "mode":
-            return torch.mode(outputs, dim=0).values
-        case "max":
-            return torch.max(outputs, dim=0).values
-        case "min":
-            return torch.min(outputs, dim=0).values
-        case "mean":
-            return torch.mean(outputs, dim=0)

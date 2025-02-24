@@ -1,16 +1,47 @@
+import random
 import sys
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Dict, Sequence
 
 import torch
 from torch import Tensor, nn
 from torchvision.transforms import v2
+from torchvision.transforms.v2 import functional as TF
 
 sys.path.append(str((Path(__file__) / "..").resolve()))
 from rng import get_rng_state, set_rng_state
 
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STDDEV = (0.229, 0.224, 0.225)
+
+
+class RandomRescale(v2.Transform):
+    def __init__(
+        self,
+        scale_range: tuple[float, float],
+        interpolation: v2.InterpolationMode = v2.InterpolationMode.BILINEAR,
+        antialias: bool = True,
+    ) -> None:
+        super().__init__()
+        self.scale_range = scale_range
+        self.interpolation = interpolation
+        self.antialias = antialias
+
+    def make_params(self, flat_inputs: list[Any]) -> Dict[str, Any]:
+        img = flat_inputs[0]
+        assert isinstance(img, Tensor)
+        scale = random.uniform(*self.scale_range)
+        size: list[int] = [int(img.size(i) * scale) for i in [-2, -1]]
+        return dict(size=size)
+
+    def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
+        return self._call_kernel(
+            TF.resize,
+            inpt,
+            params["size"],
+            interpolation=self.interpolation,
+            antialias=self.antialias,
+        )
 
 
 class ImageMaskTransform(nn.Module):
