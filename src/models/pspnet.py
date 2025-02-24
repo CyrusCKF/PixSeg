@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import Sequence
+from typing import Literal, Sequence
 
 import torch
 from torch import Tensor, nn
@@ -20,10 +20,9 @@ from src.datasets.pytorch_datasets import VOC_LABELS
 from src.utils.transform import SegmentationAugment
 
 
-# TODO use custom implementation of _SimpleSegmentationModel
 class PSPNet(_SimpleSegmentationModel):
-    """Implements PSPNet model from `Pyramid Scene Parsing Network
-    <https://arxiv.org/abs/1612.01105>`_"""
+    """Implements PSPNet model from [Pyramid Scene Parsing
+    Network](<https://arxiv.org/abs/1612.01105>)"""
 
 
 class PSPHead(nn.Module):
@@ -32,13 +31,16 @@ class PSPHead(nn.Module):
         in_channels: int,
         out_channels: int,
         pooling_sizes: Sequence[int] = (1, 2, 3, 6),
+        pool_layer: Literal["avg", "max"] = "avg",
     ) -> None:
         super().__init__()
         self.poolings = nn.ModuleList()
         out_chan = in_channels // len(pooling_sizes)
+
+        pool_nn = nn.AdaptiveAvgPool2d if pool_layer == "avg" else nn.AdaptiveMaxPool2d
         for size in pooling_sizes:
             mods = [
-                nn.AdaptiveAvgPool2d(size),  # TODO support max pool
+                pool_nn(size),
                 nn.Conv2d(in_channels, out_chan, 1, bias=False),
                 nn.BatchNorm2d(out_chan),
                 nn.ReLU(),

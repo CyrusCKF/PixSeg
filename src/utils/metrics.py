@@ -5,15 +5,6 @@ import numpy as np
 import torch
 from torch import Tensor
 
-try:
-    # TODO do it in numpy/tensor so sklearn is not required
-    from sklearn.metrics import confusion_matrix
-except ModuleNotFoundError:
-    raise ImportError(
-        f"This module {__name__.replace('src.', '')} is not available."
-        f" Please install via 'pip install semantic-segmentation-toolkit[full]'"
-    ) from None
-
 
 class MetricStore:
     """Accumulate batch prediction results and compute metrics efficiently
@@ -39,14 +30,9 @@ class MetricStore:
         self.measures: dict[str, float] = defaultdict(lambda: 0)
 
     def store_results(self, truths: Tensor, preds: Tensor):
-        """Values outside the range of `(0, num_classes)` will be ignored"""
-        true_arr = truths.numpy(force=True).flatten()
-        pred_arr = preds.numpy(force=True).flatten()
-        # confusion_matrix will ignore values outside the range
-        results_cm = confusion_matrix(
-            true_arr, pred_arr, labels=range(self.num_classes)
-        )
-        self.confusion_matrix += results_cm
+        """Values outside the range of `[0, num_classes)` will be ignored"""
+        results_cm = fast_confusion_matrix(truths, preds, self.num_classes)
+        self.confusion_matrix += results_cm.numpy()
 
     def store_measures(self, num_data: int, measures: dict[str, float]):
         """Expect the measures in "sum" of all data"""
@@ -107,11 +93,35 @@ def metrics_from_confusion(cm: np.ndarray) -> dict[str, float]:
     return metrics
 
 
+def fast_confusion_matrix(truths: Tensor, preds: Tensor, num_classes: int) -> Tensor:
+    """Calculate the confusion matrix in Tensor
+
+    This function is faster than :module:`sklearn.metrics` since it doesn't convert
+    to numpy array every single time. All indices outside the range of `[0, num_classes)`
+    are ignored.
+
+    Returns:
+        A confusion matrix *(int Tensor (N, N))* where element at `[i, j]` is equal to
+            the number of ground truths in class `i` and predicted to be class `j`
+    """
+
+    in_range = (
+        (truths >= 0) & (truths < num_classes) & (preds >= 0) & (preds < num_classes)
+    )
+    truths = truths[in_range]
+    preds = preds[in_range]
+    # combine to single tensor first to get frequency
+    indices = truths.flatten() * num_classes + preds.flatten()
+    matrix = torch.bincount(indices, minlength=num_classes * num_classes)
+    matrix = matrix.reshape(num_classes, num_classes)
+    return matrix
+
+
 def _test():
     num_classes = 10
-    truths = np.random.randint(0, num_classes, [160, 90]).flatten()
-    preds = np.random.randint(0, num_classes, [160, 90]).flatten()
-    matrix = confusion_matrix(truths, preds)
+    truths = torch.randint(0, num_classes, [160, 90]).flatten()
+    preds = torch.randint(0, num_classes, [160, 90]).flatten()
+    matrix = fast_confusion_matrix(truths, preds, num_classes).numpy()
     print(matrix)
     print(metrics_from_confusion(matrix))
 

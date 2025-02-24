@@ -20,12 +20,11 @@ except ModuleNotFoundError:
     ) from None
 
 
-# TODO optionally not set extra_color on mask ouside the range
 def draw_mask_on_image(
     image: Tensor,
     mask: Tensor,
     colors: Sequence[tuple[int, int, int]],
-    extra_color=(256, 256, 256),
+    extra_color: tuple[int, int, int] | None = None,
 ) -> Tensor:
     """Overlay mask on image
 
@@ -35,19 +34,14 @@ def draw_mask_on_image(
         extra_color: Used for all element in mask outside the range of :param:`colors`
     """
 
-    num_cats = len(colors)
-    mask = mask.clone().to(dtype=torch.long)
-    mask[mask < 0] = num_cats
-    mask[mask >= num_cats] = num_cats
+    num_classes = len(colors)
+    one_hot_mask = torch.stack([mask == i for i in range(num_classes)])
+    overlay = draw_segmentation_masks(image, one_hot_mask, colors=list(colors))
 
-    one_hot_mask = F.one_hot(mask, num_cats + 1)
-    one_hot_mask = (one_hot_mask == 1).permute(2, 0, 1).contiguous()
-    drawing = draw_segmentation_masks(
-        image,
-        one_hot_mask,
-        colors=list(colors) + [extra_color],  # type: ignore
-    )
-    return drawing
+    if extra_color is not None:
+        extra_mask = (mask < 0) | (mask >= num_classes)
+        overlay = draw_segmentation_masks(overlay, extra_mask, colors=extra_color)
+    return overlay
 
 
 def combine_images(images: list[Tensor], **kwargs) -> Tensor:
