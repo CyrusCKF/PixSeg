@@ -2,5 +2,7 @@
 # empty string is neglected
 BDD100K = ''
 Cityscapes = ''
+CityscapesCategory = ''
+CityscapesFull = ''
 SBD = ''
 VOC = ''

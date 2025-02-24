@@ -9,7 +9,7 @@ from torch import Tensor
 from torch.utils.data import Subset
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
-from src.datasets import DATASET_METADATA, DATASET_ZOO, resolve_metadata
+from src.datasets import *
 from src.utils.transform import SegmentationTransform
 
 
@@ -69,6 +69,25 @@ def test_dataset_with_format(name, dataset_roots, test_size=10):
             ), f"Unexpected classes in dataset {name}: {unique_unexpected}"
 
 
-if __name__ == "__main__":
+def main():
+    import numpy as np
+    from PIL import Image
+    from torch.utils.data import Dataset
+    from torchvision import datasets
+
     print(DATASET_ZOO)
     print(DATASET_METADATA)
+
+    dataset: Dataset = datasets.Cityscapes(
+        root=r"..\segmentation-backend\example_datasets\cityscapes",
+        target_type="semantic",
+        split="val",
+    )
+    data: tuple[Image.Image, Image.Image] = dataset[1]
+    image, mask = data
+    mask_arr = np.array(mask)
+    print(mask.size, np.unique(mask_arr))
+
+
+if __name__ == "__main__":
+    main()
