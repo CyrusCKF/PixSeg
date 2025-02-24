@@ -4,6 +4,14 @@ try:
     from .config import Config
     from .engine import create_snapshots, eval_one_epoch, forward_batch, train_one_epoch
     from .logger import LocalLogger, TensorboardLogger, WandbLogger, init_logging
+    from .testtime import (
+        aggregate_outputs,
+        blur_output,
+        inference_with_augmentations,
+        morph_pred,
+        refine_prob_by_crf,
+        threshold_prob,
+    )
     from .trainer import Checkpoint, Trainer
 except ModuleNotFoundError:
     raise ImportError(

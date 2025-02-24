@@ -22,7 +22,7 @@ register_model()(segmentation.fcn_resnet101)
 
 class FCN_ResNet34_Weights(SegWeightsEnum):
     VOC2012 = SegWeights(
-        "https://github.com/CyrusCKF/segmentic-segmentation-toolkit/releases/download/fcn/fcn_resnet34-voc2012-500x500.pth",
+        "https://github.com/CyrusCKF/segmentic-segmentation-toolkit/releases/download/fcn/fcn_resnet34-voc2012-500x500-20250221.pth",
         SegmentationAugment,
         VOC_LABELS,
         "Trained on PASCAL VOC 2012 dataset",
