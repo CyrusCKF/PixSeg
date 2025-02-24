@@ -2,15 +2,22 @@ from pathlib import Path
 from typing import Sequence
 
 import numpy as np
-import seaborn as sns
 import torch
-from matplotlib import pyplot as plt
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
 from torch import Tensor
 from torch.nn import functional as F
 from torchvision.transforms import v2
 from torchvision.utils import draw_segmentation_masks, make_grid
+
+try:
+    import seaborn as sns
+    from matplotlib import pyplot as plt
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
+except ModuleNotFoundError:
+    raise ImportError(
+        f"This module {__name__.replace('src.', '')} is not available."
+        f" Please install via 'pip install semantic-segmentation-toolkit[full]'"
+    ) from None
 
 
 # TODO optionally not set extra_color on mask ouside the range

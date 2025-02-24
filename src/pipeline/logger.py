@@ -8,17 +8,15 @@ from pathlib import Path
 from typing import Sequence
 
 import numpy as np
+import wandb
 import wandb.wandb_run
 from PIL.Image import Image
 from torch import Tensor
 from torch.utils.tensorboard.writer import SummaryWriter
 from torchvision.transforms.v2 import functional as TF
 
-import wandb
-
 sys.path.append(str((Path(__file__) / "../../..").resolve()))
 from src.utils import visual
-from src.utils.metrics import MetricStore
 
 logger = logging.getLogger(__name__)
 

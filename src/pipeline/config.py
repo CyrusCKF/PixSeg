@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 
 class Config:
+    """Please check `doc/config.md` for explanation of each fields"""
+
     def __init__(self, config: dict[str, Any]) -> None:
         self.config = config
         self._dataset_meta: DatasetMeta | None = None

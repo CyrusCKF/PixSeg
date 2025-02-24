@@ -2,11 +2,15 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch]
+build.targets.wheel.packages = ["src"]
+metadata.allow-direct-references = true
+
 [project]
-dynamic = ["dependencies"]
 name = "semantic-segmentation-toolkit"
 version = "0.1.0"
 requires-python = ">=3.10"
+dependencies = ["torch", "torchvision", "torchaudio"]
 authors = [
     { name = "Cheung Ka Fai", email = "cyrus.cheungkf@gmail.com" },
     { email = "m19990328@gmail.com" },
@@ -29,11 +33,26 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
 ]
 
+[project.optional-dependencies]
+full = [
+    "matplotlib>=3.10.0",
+    "seaborn>=0.13.2",
+    "scikit-learn>=1.6.1",
+    "tqdm>=4.67.1",
+    "toml>=0.10.2",
+    "wandb>=0.19.6",
+    "tensorboard>=2.19.0",
+]
+dev = [
+    "semantic-segmentation-toolkit[full]",
+    "torchinfo>=1.8.0",
+    "jupyter>=1.1.1",
+    "pytest>=8.3.4",
+    "pydensecrf @ git+https://github.com/lucasb-eyer/pydensecrf.git",
+]
+
 [project.urls]
 Homepage = "https://github.com/CyrusCKF/segmentic-segmentation-toolkit"
 Documentation = "https://github.com/CyrusCKF/segmentic-segmentation-toolkit/blob/main/README.md"
 Repository = "https://github.com/CyrusCKF/segmentic-segmentation-toolkit"
 Issues = "https://github.com/CyrusCKF/segmentic-segmentation-toolkit/issues"
-
-[tool.setuptools.dynamic]
-dependencies = { file = ["doc/requirements.txt"] }

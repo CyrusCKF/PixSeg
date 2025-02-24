@@ -3,8 +3,16 @@ from typing import cast
 
 import numpy as np
 import torch
-from sklearn.metrics import confusion_matrix
 from torch import Tensor
+
+try:
+    # TODO do it in numpy/tensor so sklearn is not required
+    from sklearn.metrics import confusion_matrix
+except ModuleNotFoundError:
+    raise ImportError(
+        f"This module {__name__.replace('src.', '')} is not available."
+        f" Please install via 'pip install semantic-segmentation-toolkit[full]'"
+    ) from None
 
 
 class MetricStore:
