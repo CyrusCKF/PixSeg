@@ -16,6 +16,8 @@ IMAGENET_STDDEV = (0.229, 0.224, 0.225)
 
 
 class RandomRescale(v2.Transform):
+    """Similar to :class:`RandomResize` but for scale"""
+
     def __init__(
         self,
         scale_range: tuple[float, float],
@@ -59,7 +61,7 @@ class ImageMaskTransform(nn.Module):
         self.mask = mask
 
     def forward(
-        self, image: Tensor, mask: Tensor | None
+        self, image: Tensor, mask: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         rng_state = get_rng_state()
         image = self.image(image)
@@ -101,18 +103,19 @@ class SegmentationTransform(v2.Compose):
         super().__init__([ImageMaskTransform(image_transform, mask_transform)])
 
 
-# TODO support random rescaling and vflip
 class SegmentationAugment(v2.Compose):
     """Default data augmentations for semantic segmentation"""
 
     def __init__(
         self,
         hflip=0.0,
+        vflip=0.0,
         blur_size=1,
         blur_sigma: Sequence[float] = (0.1, 2.0),
         color_jitter: Sequence[float] = (0, 0, 0, 0),
         perspective=0.0,
-        rotation=0.0,
+        rotation_range: tuple[float, float] = (0, 0),
+        scale_range: tuple[float, float] = (1, 1),
         auto_contrast=0.0,
         mask_fill=255,
     ) -> None:
@@ -120,33 +123,37 @@ class SegmentationAugment(v2.Compose):
 
         Example for training:
         ```
-        DataAugment(hflip = 0.5, color_jitter = (0.1, 0.1, 0.1), blur_size=9,
-        perspective = 0.2, rotation = 30, auto_contrast = 0.5)
+        SegmentationAugment(hflip = 0.5, color_jitter = (0.1, 0.1, 0.1), blur_size=9,
+            perspective = 0.2, rotation_range = (-30, 30), auto_contrast = 0.5)
         ```
 
         Args:
+            scale_range: random scale range for image. Mask will not be scaled
             mask_fill: used for filling the mask when neccessary
         """
         image_transform = v2.Compose(
             [
                 v2.RandomHorizontalFlip(hflip),
+                v2.RandomVerticalFlip(vflip),
                 v2.RandomPerspective(perspective),
-                v2.RandomRotation(degrees=rotation),  # type: ignore
-                v2.ColorJitter(*color_jitter),
-                v2.RandomAutocontrast(auto_contrast),
+                v2.RandomRotation(degrees=rotation_range),
                 v2.GaussianBlur(blur_size, blur_sigma),
+                v2.ColorJitter(*color_jitter),
+                RandomRescale(scale_range),
+                v2.RandomAutocontrast(auto_contrast),
                 v2.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STDDEV),
             ]
         )
         mask_transform = v2.Compose(
             [
                 v2.RandomHorizontalFlip(hflip),
+                v2.RandomVerticalFlip(vflip),
                 v2.RandomPerspective(
                     perspective,
                     interpolation=v2.InterpolationMode.NEAREST,
                     fill=mask_fill,
                 ),
-                v2.RandomRotation(degrees=rotation, fill=mask_fill),  # type: ignore
+                v2.RandomRotation(degrees=rotation_range, fill=mask_fill),
             ]
         )
         super().__init__([ImageMaskTransform(image_transform, mask_transform)])
