@@ -10,7 +10,6 @@ from typing import Sequence
 
 import numpy as np
 import torch
-from pydensecrf.utils import unary_from_softmax
 from scipy.ndimage import binary_dilation, binary_erosion, gaussian_filter
 from torch import Tensor, nn
 from torch.nn import functional as F
@@ -34,6 +33,7 @@ def refine_prob_by_crf(prob: np.ndarray, image: Tensor | None, iter=5) -> np.nda
     """
     try:
         from pydensecrf import densecrf as dcrf  # type: ignore
+        from pydensecrf.utils import unary_from_softmax
     except ImportError:
         raise ImportError(
             "Package pydensecrf not found. Please check installation"

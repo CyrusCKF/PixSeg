@@ -138,8 +138,10 @@ class LocalLogger(Logger):
         combined_pil.save(path)
 
 
+# TODO also save snapshots optionally
 class WandbLogger(Logger):
-    # TODO also save snapshots optionally
+    """Save log results and optionally snapshots to wandb"""
+
     def __init__(
         self,
         api_key: str | None,  # used for resuming
@@ -186,8 +188,10 @@ class WandbLogger(Logger):
         self.run.log(metrics_with_job, step=step)
 
 
+# TODO use add_hparams to log config
 class TensorboardLogger(Logger):
-    # TODO use add_hparams to log config
+    """Save log results and snapshots to Tensorboard"""
+
     def __init__(
         self, parent_dir: str | None = None, save_images=True, **kwargs
     ) -> None:

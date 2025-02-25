@@ -101,7 +101,7 @@ class SegmentationTransform(v2.Compose):
         super().__init__([ImageMaskTransform(image_transform, mask_transform)])
 
 
-# support random rescaling and vflip
+# TODO support random rescaling and vflip
 class SegmentationAugment(v2.Compose):
     """Default data augmentations for semantic segmentation"""
 

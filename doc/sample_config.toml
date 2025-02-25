@@ -4,7 +4,7 @@
 
 [model]
 model = "deeplabv3_mobilenet_v3_large"
-# state_file = './model_pth'             # uncomment to load model state dict
+# state_file = './model.pth'             # uncomment to load model state dict
 params = {}
 
 [data.dataset]
@@ -21,7 +21,7 @@ params = { hflip = 0.5 }
 
 [criterion]
 criterion = "CrossEntropyLoss"
-class_weight = "none"
+class_weight = "none"          # name of list of floats
 aux_weight = 0
 params = {}
 

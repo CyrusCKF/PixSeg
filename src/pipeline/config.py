@@ -1,5 +1,6 @@
 import logging
 import sys
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -121,7 +122,11 @@ class Config:
     def build_criterion(self, dataset: data.Dataset) -> Loss:
         meta = self.dataset_meta
         weighting = self.config["criterion"]["class_weight"]
-        weight = CLASS_WEIGHTINGS[weighting](dataset, meta.num_classes)
+        if isinstance(weighting, list):
+            weight = torch.tensor(weighting)
+        else:
+            weighting = self.config["criterion"]["class_weight"]
+            weight = CLASS_WEIGHTINGS[weighting](dataset, meta.num_classes)
 
         crit = self.config["criterion"]["criterion"]
         params = self.config["criterion"]["params"]
@@ -145,9 +150,17 @@ class Config:
 
     def get_trainer_params(self) -> dict[str, Any]:
         params = self.config["trainer"]["params"]
-        params["loss_weight"] = {"aux": self.config["criterion"]["aux_weight"]}
         params["out_folder"] = self.out_folder
         params["device"] = self.device
+
+        aux_weight = self.config["criterion"]["aux_weight"]
+        has_aux_loss = self.config["model"]["params"].get("aux_loss", False)
+        if aux_weight != 0 and not has_aux_loss:
+            warnings.warn(
+                "aux_weight is set to non-zero while aux_loss for model is not detected."
+                " This may not have any effect."
+            )
+        params["loss_weight"] = {"aux": aux_weight}
 
         batch_size = self.config["data"]["loader"]["params"].get("batch_size", 1)
         effective_batch_size = self.config["optimizer"]["effective_batch_size"]

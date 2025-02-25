@@ -104,14 +104,15 @@ def fast_confusion_matrix(truths: Tensor, preds: Tensor, num_classes: int) -> Te
         A confusion matrix *(int Tensor (N, N))* where element at `[i, j]` is equal to
             the number of ground truths in class `i` and predicted to be class `j`
     """
-
+    truths = truths.detach().cpu().flatten()
+    preds = preds.detach().cpu().flatten()
     in_range = (
         (truths >= 0) & (truths < num_classes) & (preds >= 0) & (preds < num_classes)
     )
     truths = truths[in_range]
     preds = preds[in_range]
     # combine to single tensor first to get frequency
-    indices = truths.flatten() * num_classes + preds.flatten()
+    indices = truths * num_classes + preds
     matrix = torch.bincount(indices, minlength=num_classes * num_classes)
     matrix = matrix.reshape(num_classes, num_classes)
     return matrix
@@ -131,6 +132,27 @@ def _test():
     preds = torch.randint(0, 4, [100, 50])
     ms.store_results(truths, preds)
     print(ms.summarize())
+
+    from timeit import default_timer
+
+    from sklearn.metrics import confusion_matrix
+
+    truths = torch.randint(0, num_classes, [1600, 900]).to("cuda").flatten()
+    preds = torch.randint(0, num_classes, [1600, 900]).to("cuda").flatten()
+
+    start_time = default_timer()
+    for i in range(100):
+        fast_confusion_matrix(truths, preds, num_classes).numpy(force=True)
+    end_time = default_timer()
+    print("fast_confusion_matrix", end_time - start_time)
+
+    start_time = default_timer()
+    for i in range(100):
+        confusion_matrix(
+            truths.numpy(force=True), preds.numpy(force=True), labels=range(num_classes)
+        )
+    end_time = default_timer()
+    print("sklearn.metrics", end_time - start_time)
 
 
 if __name__ == "__main__":
