@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import Callable
+from typing import Callable, ParamSpec, TypeVar
 
 import torch
 from torch import Tensor
@@ -11,9 +11,11 @@ from torch.nn.modules.loss import _Loss, _WeightedLoss
 sys.path.append(str((Path(__file__) / "..").resolve()))
 from learn_api import CRITERION_ZOO
 
+P = ParamSpec("P")
+
 
 def register_criterion(name: str | None = None):
-    def wrapper(callable: Callable[..., _Loss]) -> Callable[..., _Loss]:
+    def wrapper(callable: Callable[P, _Loss]) -> Callable[P, _Loss]:
         key = callable.__name__ if name is None else name
         if key in CRITERION_ZOO:
             raise KeyError(f"An entry is already registered under the key '{key}'.")
@@ -27,7 +29,6 @@ register_criterion()(CrossEntropyLoss)
 # TODO make Focal loss
 
 
-# TODO test this
 @register_criterion()
 class DiceLoss(_WeightedLoss):
     """Dice loss for multi class.
@@ -49,6 +50,8 @@ class DiceLoss(_WeightedLoss):
         label_smoothing: float = 0.0,
     ) -> None:
         """See :class:`CrossEntropyLoss` for each argument"""
+        if weight is not None:
+            weight /= weight.sum()
         super().__init__(weight, None, None, reduction)
         self.ignore_index = ignore_index
         self.label_smoothing = label_smoothing
@@ -56,31 +59,30 @@ class DiceLoss(_WeightedLoss):
 
     def forward(self, input: Tensor, target: Tensor) -> Tensor:
         """Compute the Dice loss"""
+        num_classes = input.size(1)
         input = F.softmax(input, dim=1)
-        target_one_hot = F.one_hot(target, num_classes=input.shape[1]).float()
+        target_one_hot = torch.stack([target == i for i in range(num_classes)], dim=1)
+        target_one_hot = target_one_hot.to(torch.float)
 
         mask = target != self.ignore_index
         input = input * mask.unsqueeze(1)
         target_one_hot = target_one_hot * mask.unsqueeze(1)
 
-        # Apply label smoothing if specified
         if self.label_smoothing > 0:
-            target_one_hot = (
-                target_one_hot * (1 - self.label_smoothing)
-                + self.label_smoothing / input.shape[1]
-            )
+            target_one_hot *= 1 - self.label_smoothing
+            target_one_hot += self.label_smoothing / num_classes
 
-        # Compute intersection and union
-        intersection = input * target_one_hot.sum(dim=(0, 1))
-        union = input.sum(dim=(0, 1)) + target_one_hot.sum(dim=(0, 1))
-
-        # Compute Dice score
+        # Compute dice
+        spatial_dims = list(range(2, input.dim()))
+        intersection = (input * target_one_hot).sum(dim=spatial_dims)
+        union = input.sum(dim=spatial_dims) + target_one_hot.sum(dim=spatial_dims)
         dice_score = (2 * intersection + self.eps) / (union + self.eps)
         dice_loss = 1 - dice_score
 
-        # Apply class weights if specified
         if self.weight is not None:
-            dice_loss = dice_loss * self.weight
+            assert len(self.weight) == num_classes
+            dice_loss *= self.weight
+        dice_loss = dice_loss.mean(dim=1)
 
         # Reduce the loss
         if self.reduction == "mean":
@@ -92,12 +94,21 @@ class DiceLoss(_WeightedLoss):
 
 
 def _test():
-    ce_loss = CrossEntropyLoss()
-    dice_loss = DiceLoss()
+    num_classes = 20
+    ce_loss = CrossEntropyLoss(
+        ignore_index=num_classes,
+    )
+    dice_loss = DiceLoss(
+        # weight=torch.rand([num_classes]),
+        ignore_index=num_classes,
+        label_smoothing=0.1,
+        reduction="mean",
+    )
 
-    x = torch.tensor([[1, 2, 1], [1, 1, 2]], dtype=torch.float)
-    y = torch.tensor([1, 1])
-    print(ce_loss(x, y), dice_loss(x, y))
+    logits = torch.rand([4, num_classes, 160, 90]) * 5 - 2
+    masks = torch.randint(0, num_classes + 1, [4, 160, 90])
+
+    print(ce_loss(logits, masks), dice_loss(logits, masks))
 
 
 if __name__ == "__main__":
