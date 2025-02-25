@@ -36,7 +36,8 @@ class Padam(optim.Optimizer):
 
     Allows partial to be negative, i.e. gradient squared in the numerator with momentum
 
-    Note: When partial is `1`, this is identical to :class:`Adam`.
+    Note: When partial is `0.5`, this is identical to :class:`Adam/Amsgrad`. When partial is `0`,
+    this is identical to :class:`SGD with momentum`.
     """
 
     # Reference: https://github.com/uclaml/Padam/blob/master/Padam.py
@@ -87,8 +88,7 @@ class Padam(optim.Optimizer):
                         "Padam does not support sparse gradients, please consider SparseAdam instead"
                     )
                 amsgrad = group["amsgrad"]
-                if group["weight_decay"] != 0:
-                    grad.add_(p.data, alpha=group["weight_decay"])
+                partial = group["partial"]
 
                 state = self.state[p]
                 # State initialization
@@ -101,8 +101,10 @@ class Padam(optim.Optimizer):
                     if amsgrad:
                         # Maintains max of all exp. moving avg. of sq. grad. values
                         state["max_exp_avg_sq"] = torch.zeros_like(p.data)
-
                 state["step"] += 1
+
+                if group["weight_decay"] != 0:
+                    grad = grad.add(p.data, alpha=group["weight_decay"])
 
                 # Decay the first and second moment running average coefficient
                 exp_avg: Tensor = state["exp_avg"]
@@ -111,19 +113,19 @@ class Padam(optim.Optimizer):
                 exp_avg.lerp_(grad, 1 - beta1)
                 exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1 - beta2)
 
-                bias_correction1 = 1 - beta1 ** state["step"]
-                bias_correction2 = 1 - beta2 ** state["step"]
-                step_size = group["lr"] * math.sqrt(bias_correction2) / bias_correction1
-
                 if amsgrad:
                     max_exp_avg_sq: Tensor = state["max_exp_avg_sq"]
                     # Maintains the maximum of all 2nd moment running avg. till now
                     torch.max(max_exp_avg_sq, exp_avg_sq, out=max_exp_avg_sq)
                     # Use the max. for normalizing running avg. of gradient
-                    avg_sq = max_exp_avg_sq
+                    denom = max_exp_avg_sq.sqrt().add_(group["eps"])
                 else:
-                    avg_sq = exp_avg_sq
-                avg_sq.sqrt_().add_(group["eps"]).pow_(group["partial"] * 2)
-                p.data.addcdiv_(exp_avg, avg_sq, value=-step_size)
+                    denom = exp_avg_sq.sqrt().add_(group["eps"])
+
+                bias_correction1 = 1 - beta1 ** state["step"]
+                bias_correction2 = 1 - beta2 ** state["step"]
+                step_size = group["lr"] * math.sqrt(bias_correction2) / bias_correction1
+
+                p.data.addcdiv_(exp_avg, denom ** (partial * 2), value=-step_size)
 
         return loss

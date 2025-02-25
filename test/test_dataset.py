@@ -41,8 +41,8 @@ def test_dataset_with_format(name, dataset_roots, test_size=10):
     root = dataset_roots[name]
     transform = SegmentationTransform()
     datasets = [
-        entry.construct_train(root, transform),
-        entry.construct_val(root, transform),
+        entry.construct_train(transform, root=root),
+        entry.construct_val(transform, root=root),
     ]
 
     for dataset in datasets:

@@ -173,7 +173,7 @@ def create_snapshots(
         preds = torch.argmax(logits["out"], 1).to(torch.long)
 
         image = images[0]
-        mask_overlay = draw_mask_on_image(image, masks[0], colors)
+        mask_overlay = draw_mask_on_image(image, masks[0], colors, (255, 255, 255))
         pred_overlay = draw_mask_on_image(image, preds[0], colors)
         snapshots.append([image, mask_overlay, pred_overlay])
     return snapshots

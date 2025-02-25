@@ -48,18 +48,14 @@ class DatasetEntry:
     train_kwargs: dict
     val_kwargs: dict
 
-    def construct_train(
-        self, root: Path | str, transforms: Callable | None = None, *args, **kwargs
-    ):
+    def construct_train(self, transforms: Callable | None = None, *args, **kwargs):
         return self.constructor(
-            root=root, transforms=transforms, *args, **kwargs, **self.train_kwargs
+            transforms=transforms, *args, **kwargs, **self.train_kwargs
         )
 
-    def construct_val(
-        self, root: Path | str, transforms: Callable | None = None, *args, **kwargs
-    ):
+    def construct_val(self, transforms: Callable | None = None, *args, **kwargs):
         return self.constructor(
-            root=root, transforms=transforms, *args, **kwargs, **self.val_kwargs
+            transforms=transforms, *args, **kwargs, **self.val_kwargs
         )
 
 
