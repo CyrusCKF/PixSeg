@@ -20,11 +20,20 @@ class RandomRescale(v2.Transform):
 
     def __init__(
         self,
-        scale_range: tuple[float, float],
+        scale_range: Sequence[float],
         interpolation: v2.InterpolationMode = v2.InterpolationMode.BILINEAR,
         antialias: bool = True,
     ) -> None:
+        """
+        Args:
+            scale_range: Range of scale (min, max)
+        """
         super().__init__()
+        if len(scale_range) != 2:
+            raise ValueError(
+                "Expected scale_range to be of the form (min, max), but got",
+                scale_range,
+            )
         self.scale_range = scale_range
         self.interpolation = interpolation
         self.antialias = antialias
@@ -82,7 +91,7 @@ class SegmentationTransform(v2.Compose):
     """
 
     def __init__(
-        self, size: tuple[int, int] | None = None, mask_fill: int = -100
+        self, size: Sequence[int] | None = None, mask_fill: int = -100
     ) -> None:
         image_transforms = [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
         mask_transforms = [
@@ -114,8 +123,8 @@ class SegmentationAugment(v2.Compose):
         blur_sigma: Sequence[float] = (0.1, 2.0),
         color_jitter: Sequence[float] = (0, 0, 0, 0),
         perspective=0.0,
-        rotation_range: tuple[float, float] = (0, 0),
-        scale_range: tuple[float, float] = (1, 1),
+        rotation_range: Sequence[float] = (0, 0),
+        scale_range: Sequence[float] = (1, 1),
         auto_contrast=0.0,
         mask_fill=255,
     ) -> None:
