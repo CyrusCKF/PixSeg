@@ -7,7 +7,7 @@ from torch import Tensor
 from torch.utils.data import Dataset
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
-from src.learn import CLASS_WEIGHTINGS, CRITERION_ZOO, LR_SCHEDULER_ZOO, OPTIMIZER_ZOO
+from src.learn import *
 from src.learn.weighting import WeightingFunc
 
 

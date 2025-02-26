@@ -1,4 +1,4 @@
-from .criteria import CRITERION_ZOO, DiceLoss, register_criterion
+from .criteria import CRITERION_ZOO, DiceLoss, FocalLoss, register_criterion
 from .lr_schedule import LR_SCHEDULER_ZOO, register_lr_scheduler
 from .optimization import OPTIMIZER_ZOO, Padam, register_optimizer
 from .weighting import (

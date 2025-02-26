@@ -30,7 +30,7 @@ class FCN_ResNet34_Weights(SegWeightsEnum):
     DEFAULT = VOC2012
 
 
-@register_model()
+@register_model(weights_enum=FCN_ResNet34_Weights)
 def fcn_resnet34(
     num_classes: int | None = None,
     weights: FCN_ResNet34_Weights | str | None = None,

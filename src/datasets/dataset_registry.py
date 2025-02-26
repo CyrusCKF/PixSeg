@@ -32,7 +32,6 @@ def register_dataset(
             raise KeyError(f"An entry is already registered under the key '{key}'.")
 
         DATASET_ZOO[key] = DatasetEntry(callable, train_kwargs, val_kwargs)
-
         meta_entry: DatasetMeta | str = (
             meta if not isinstance(meta, int) else DatasetMeta.default(meta)
         )

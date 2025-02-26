@@ -48,3 +48,5 @@ class SegWeightsEnum(Enum):
 
 MODEL_ZOO: dict[str, Callable[..., nn.Module]] = {}
 """Mapping of model name to the model builder"""
+
+MODEL_WEIGHTS: dict[str, type[SegWeightsEnum]] = {}

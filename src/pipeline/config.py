@@ -7,6 +7,7 @@ from typing import Any
 
 import torch
 from torch import GradScaler, Tensor, nn
+from torch.hub import load_state_dict_from_url
 from torch.nn.modules.loss import _Loss as Loss
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
@@ -20,7 +21,7 @@ from trainer import Trainer
 sys.path.append(str((Path(__file__) / "../../..").resolve()))
 from src.datasets import DATASET_ZOO, DatasetMeta, resolve_metadata
 from src.learn import CLASS_WEIGHTINGS, CRITERION_ZOO, LR_SCHEDULER_ZOO, OPTIMIZER_ZOO
-from src.models import MODEL_ZOO
+from src.models import MODEL_WEIGHTS, MODEL_ZOO
 from src.utils.transform import SegmentationAugment, SegmentationTransform
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ class Config:
 
     def build_model(self) -> nn.Module:
         model_name = self.config["model"]["model"]
-        params: dict = self.config["model"]["params"]
+        params: dict = self.config["model"]["params"].copy()
         weights = params.pop("weights", None)
         num_classes = self.dataset_meta.num_classes
         model = MODEL_ZOO[model_name](num_classes=num_classes, **params)
@@ -76,10 +77,19 @@ class Config:
         state_file = self.config["model"].get("state_file")
         if weights is not None and state_file is not None:
             raise ValueError("Expect at most one of state_file or params.weights")
+        # access weights state dict directly if possible
         if weights is not None:
-            # TODO access weights state dict directly instead of creating another model
-            model_with_weights = MODEL_ZOO[model_name](weights=weights, **params)
-            state_dict = model_with_weights.state_dict()
+            seg_weights = None
+            if model_name in MODEL_WEIGHTS:
+                seg_weights = MODEL_WEIGHTS[model_name].resolve(weights)
+
+            if seg_weights is not None:
+                state_dict = load_state_dict_from_url(
+                    seg_weights.url, progress=params.get("progress", True)
+                )
+            else:
+                model_with_weights = MODEL_ZOO[model_name](weights=weights, **params)
+                state_dict = model_with_weights.state_dict()
         if state_file is not None:
             state_dict = torch.load(state_file)
 
@@ -175,21 +185,26 @@ class Config:
 
     def build_loggers(self) -> list[Logger]:
         loggers: list[Logger] = [LocalLogger(self.out_folder, self.dataset_meta.labels)]
+        config_to_log = {k: v for k, v in self.config.items() if k != "log"}
+        config_dict = _flatten_nested_dict(config_to_log)
 
         wandb_table = self.config["log"]["wandb"]
         wandb_key = wandb_table.get("api_key")
         if wandb_key is not None:
             run_id = wandb_table.get("run_id")
             wandb_params = wandb_table["params"]
-            config_to_log = {k: v for k, v in self.config.items() if k != "log"}
-            config = _flatten_nested_dict(config_to_log)
-            wandb_logger = WandbLogger(wandb_key, run_id, config=config, **wandb_params)
+            wandb_logger = WandbLogger(
+                wandb_key, run_id, config=config_dict.copy(), **wandb_params
+            )
             loggers.append(wandb_logger)
 
         tensorboard_table = self.config["log"]["tensorboard"]
         tensorboard_enabled = tensorboard_table["enabled"]
         if tensorboard_enabled:
-            loggers.append(TensorboardLogger(**tensorboard_table["params"]))
+            tensorboard_logger = TensorboardLogger(
+                config=config_dict.copy(), **tensorboard_table["params"]
+            )
+            loggers.append(tensorboard_logger)
 
         return loggers
 
@@ -205,7 +220,7 @@ class Config:
         loggers = self.build_loggers()
 
         trainer_kwargs = self.get_trainer_params()
-        dataset_meta_kwargs = self.dataset_meta.__dict__
+        dataset_meta_kwargs = self.dataset_meta.__dict__.copy()
         dataset_meta_kwargs.pop("ignore_index")
 
         # fmt: off
@@ -278,7 +293,7 @@ def safe_transfer_state_dict(model: nn.Module, state_dict: dict[str, Tensor]):
     else:
         logger.info(
             f"Transfer completed. Found abnormal keys:"
-            f" {missing_keys=}, {unexpected_keys=}, {mismatch_keys}"
+            f" {missing_keys=}, {unexpected_keys=}, {mismatch_keys=}"
         )
 
 

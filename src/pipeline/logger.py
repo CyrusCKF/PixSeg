@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Sequence
 
 import numpy as np
+import torch
 import wandb
 import wandb.wandb_run
 from PIL.Image import Image
@@ -138,7 +139,6 @@ class LocalLogger(Logger):
         combined_pil.save(path)
 
 
-# TODO also save snapshots optionally
 class WandbLogger(Logger):
     """Save log results and optionally snapshots to wandb"""
 
@@ -146,6 +146,7 @@ class WandbLogger(Logger):
         self,
         api_key: str | None,  # used for resuming
         run_id: str | None = None,
+        save_images: bool = False,
         **kwargs,
     ) -> None:
         """See :func:`wandb.init` for all supported kwargs
@@ -155,6 +156,7 @@ class WandbLogger(Logger):
         os.environ["WANDB_SILENT"] = "true"  # set it before init to avoid logging that
         self.api_key = api_key
         self.run_id = run_id
+        self.save_images = save_images
         self.kwargs = kwargs
         self.run: wandb.wandb_run.Run | None = None
 
@@ -174,7 +176,7 @@ class WandbLogger(Logger):
             settings=settings,
             **self.kwargs,
         )
-        logger.info(f"Wandb run id: {self.run.id}")
+        logger.info(f"Wandb run id: {self.run.id}. View results online: {self.run.url}")
 
     def __exit__(self, type, value, traceback) -> None:
         wandb.finish()
@@ -187,13 +189,26 @@ class WandbLogger(Logger):
         metrics_with_job = {job + "/" + k: v for k, v in metrics.items()}
         self.run.log(metrics_with_job, step=step)
 
+    def on_snapshots_created(self, job: str, step: int, snapshots: list[list[Tensor]]):
+        # wandb does not support viewing tables in different steps with slider
+        # hopefully this will be implemented soon
+        # https://github.com/wandb/wandb/issues/6286#issuecomment-2638797167
+        # Currently, view all using the "Query panel" with "runs.history.concat["val/snapshot"]"
+        if self.run is None:
+            return
+        columns = ["Step", "Image", "Ground truths", "Predictions"]
+        data = [
+            [step] + [wandb.Image(TF.to_pil_image(s)) for s in ss] for ss in snapshots
+        ]
+        my_table_1 = wandb.Table(columns=columns, data=data)
+        self.run.log({job + "/snapshot": my_table_1}, step=step)
 
-# TODO use add_hparams to log config
+
 class TensorboardLogger(Logger):
     """Save log results and snapshots to Tensorboard"""
 
     def __init__(
-        self, parent_dir: str | None = None, save_images=True, **kwargs
+        self, config: dict, parent_dir: str | None = None, save_images=True, **kwargs
     ) -> None:
         """See :class:`SummaryWriter` for all supported kwargs
 
@@ -206,6 +221,9 @@ class TensorboardLogger(Logger):
         if "log_dir" in kwargs and self.parent_dir is not None:
             logger.info("log_dir found in Tensorboard params, ignoring parent_dir")
             self.parent_dir = None
+        self.hparams = {}
+        for k, v in config.items():
+            self.hparams[k] = torch.tensor(v) if isinstance(v, (list, tuple)) else v
         self.save_images = save_images
         self.writer: SummaryWriter | None = None
         self.kwargs = kwargs
@@ -217,6 +235,15 @@ class TensorboardLogger(Logger):
             subfolder_name = f"{current_time}_{socket.gethostname()}"
             self.kwargs["log_dir"] = str(Path(self.parent_dir) / subfolder_name)
         self.writer = SummaryWriter(**self.kwargs)
+        self.writer.add_hparams(self.hparams, {}, run_name=".")
+        logger.info(
+            f"Tensorboard results stored in {self.writer.log_dir}. View results by"
+            f' running "tensorboard --logdir={Path(self.writer.log_dir).parent}"'
+        )
+        logger.warning(
+            "This will save hparams and scalers into a single folder."
+            "You need to restart tensorboard to see updated results."
+        )
 
     def __exit__(self, type, value, traceback) -> None:
         if self.writer is not None:
