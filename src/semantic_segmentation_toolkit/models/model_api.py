@@ -8,17 +8,27 @@ Access via `model_registry`
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Sequence
+from urllib.parse import urljoin
 
 from torch import nn
 from torchvision.transforms.v2 import Transform
 
+from ..utils.transform import SegmentationTransform
+
 
 @dataclass
 class SegWeights:
-    url: str
-    transforms: Callable[..., Transform]
+    file_path: str
     labels: Sequence[str]
     description: str
+    base_url: str = (
+        "https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/download"
+    )
+    transforms: Callable[..., Transform] = SegmentationTransform
+
+    @property
+    def url(self):
+        return urljoin(self.base_url, self.file_path)
 
 
 class SegWeightsEnum(Enum):

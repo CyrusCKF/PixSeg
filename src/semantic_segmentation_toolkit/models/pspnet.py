@@ -8,8 +8,7 @@ from torchvision.models.resnet import *  # type: ignore
 from torchvision.models.segmentation._utils import _SimpleSegmentationModel
 from torchvision.models.segmentation.fcn import FCNHead
 
-from ..datasets.pytorch_datasets import VOC_LABELS
-from ..utils.transform import SegmentationAugment
+from ..datasets import CITYSCAPES_LABELS, VOC_LABELS
 from .backbones import ResNetBackbone, replace_layer_name
 from .model_api import SegWeights, SegWeightsEnum
 from .model_registry import register_model
@@ -56,18 +55,38 @@ class PSPHead(nn.Module):
         return out
 
 
-@register_model()
+class PSPNET_ResNet50_Weights(SegWeightsEnum):
+    VOC2012 = SegWeights(
+        "pspnet/pspnet_resnet50-voc2012-500x500-20250222.pth",
+        VOC_LABELS,
+        "Trained on PASCAL VOC 2012 dataset",
+    )
+    CITYSCAPES_FINE = SegWeights(
+        "pspnet/pspnet_resnet50-cityscapes-512x1024-20250226.pth",
+        CITYSCAPES_LABELS,
+        "Trained on Cityscapes (fine) dataset",
+    )
+    DEFAULT = VOC2012
+
+
+@register_model(weights_enum=PSPNET_ResNet50_Weights)
 def pspnet_resnet50(
     num_classes: int | None = None,
-    weights: str | None = None,
+    weights: PSPNET_ResNet50_Weights | str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: ResNet50_Weights | str | None = ResNet50_Weights.DEFAULT,
 ):
-    if weights is not None:
-        raise NotImplementedError("Weights is not supported yet")
+    weights_model = PSPNET_ResNet50_Weights.resolve(weights)
     if num_classes is None:
-        num_classes = 21
+        num_classes = 21 if weights_model is None else len(weights_model.labels)
+    if weights_model is not None:
+        weights_backbone = None
+        if num_classes != len(weights_model.labels):
+            raise ValueError(
+                f"Model weights {weights_model} expect number of classes"
+                f"={len(weights_model.labels)}, but got {num_classes}"
+            )
 
     backbone_model = resnet50(weights=weights_backbone, progress=progress)
     backbone = ResNetBackbone(backbone_model)

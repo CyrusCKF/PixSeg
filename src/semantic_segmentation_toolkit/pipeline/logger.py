@@ -45,6 +45,7 @@ def init_logging(log_file: Path | None):
         "matplotlib.colorbar",
         "matplotlib.pyplot",
         "matplotlib.font_manager",
+        "urllib3.connectionpool",
     ]
     for l in loggers:
         logging.getLogger(l).propagate = False

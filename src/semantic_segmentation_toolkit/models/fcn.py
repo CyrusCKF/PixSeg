@@ -9,7 +9,6 @@ from torchvision.models.segmentation.fcn import (
 )
 
 from ..datasets.pytorch_datasets import VOC_LABELS
-from ..utils.transform import SegmentationAugment
 from .backbones import *
 from .model_api import SegWeights, SegWeightsEnum
 from .model_registry import register_model
@@ -20,8 +19,7 @@ register_model()(fcn_resnet101)
 
 class FCN_ResNet34_Weights(SegWeightsEnum):
     VOC2012 = SegWeights(
-        "https://github.com/CyrusCKF/segmentic-segmentation-toolkit/releases/download/fcn/fcn_resnet34-voc2012-500x500-20250221.pth",
-        SegmentationAugment,
+        "fcn/fcn_resnet34-voc2012-500x500-20250221.pth",
         VOC_LABELS,
         "Trained on PASCAL VOC 2012 dataset",
     )

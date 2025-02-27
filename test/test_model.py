@@ -35,6 +35,8 @@ def _main():
     print(model)
 
     pprint(MODEL_ZOO)
+    for key, weights in MODEL_WEIGHTS.items():
+        print(key, [(w.name, w.value.url) for w in weights])
 
 
 if __name__ == "__main__":

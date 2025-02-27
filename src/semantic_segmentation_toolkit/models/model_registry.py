@@ -1,5 +1,3 @@
-import sys
-from pathlib import Path
 from typing import Callable, ParamSpec, TypeVar
 
 from torch import nn
@@ -24,16 +22,3 @@ def register_model(
         return func
 
     return wrapper
-
-
-if __name__ == "__main__":
-    import sys
-    from pathlib import Path
-
-    sys.path.append(str((Path(__file__) / "..").resolve()))
-    import fcn
-    import pytorch_models
-
-    print(MODEL_ZOO)
-    for key, weights in MODEL_WEIGHTS.items():
-        print(key, [w.name for w in weights])

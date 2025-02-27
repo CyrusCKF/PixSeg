@@ -1,4 +1,3 @@
-from . import pytorch_datasets
 from .bdd100k import BDD100K
 from .cityscapes import (
     CITYSCAPES_CATEGORY_COLORS,
@@ -17,3 +16,4 @@ from .dataset_registry import (
     register_dataset,
     resolve_metadata,
 )
+from .pytorch_datasets import VOC_COLORS, VOC_LABELS
