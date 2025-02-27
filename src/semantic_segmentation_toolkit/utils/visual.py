@@ -4,7 +4,6 @@ from typing import Sequence
 import numpy as np
 import torch
 from torch import Tensor
-from torch.nn import functional as F
 from torchvision.transforms import v2
 from torchvision.utils import draw_segmentation_masks, make_grid
 

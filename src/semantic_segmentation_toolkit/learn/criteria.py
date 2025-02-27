@@ -1,6 +1,4 @@
-import sys
 import warnings
-from pathlib import Path
 from typing import Callable, ParamSpec
 
 import torch
@@ -9,8 +7,7 @@ from torch.nn import CrossEntropyLoss
 from torch.nn import functional as F
 from torch.nn.modules.loss import _Loss, _WeightedLoss
 
-sys.path.append(str((Path(__file__) / "..").resolve()))
-from learn_api import CRITERION_ZOO
+from .learn_api import CRITERION_ZOO
 
 P = ParamSpec("P")
 

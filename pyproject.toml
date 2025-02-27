@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "semantic-segmentation-toolkit"
 version = "0.1.2"
 requires-python = ">=3.10"
-dependencies = ["torch", "torchvision", "torchaudio"]
+dependencies = ["torch>=2.6.0", "torchvision>=0.21.0", "torchaudio>=2.6.0"]
 authors = [
     { name = "Cheung Ka Fai", email = "cyrus.cheungkf@gmail.com" },
     { email = "m19990328@gmail.com" },

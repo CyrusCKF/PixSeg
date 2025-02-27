@@ -7,7 +7,7 @@ import torch
 from torch import Tensor, nn
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
-from src.models import *
+from src.semantic_segmentation_toolkit.models import *
 
 
 def test_registry():
@@ -25,11 +25,17 @@ def test_model(model_builder: Callable[..., nn.Module]):
         assert v.shape[2:] == fake_input.shape[2:]
 
 
-if __name__ == "__main__":
-    import torchinfo
+def _main():
+    from pprint import pprint
 
-    print(MODEL_ZOO)
+    import torchinfo
 
     model = pspnet_resnet50()
     print(torchinfo.summary(model, [4, 3, 32, 56]))
     print(model)
+
+    pprint(MODEL_ZOO)
+
+
+if __name__ == "__main__":
+    _main()

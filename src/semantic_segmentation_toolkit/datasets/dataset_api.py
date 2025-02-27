@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Callable, Sequence
 
 from torch.utils.data import Dataset

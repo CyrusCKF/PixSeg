@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 from typing import Any, Literal
 
@@ -6,8 +5,7 @@ from torch.utils.data import Dataset
 from torchvision.io import ImageReadMode, decode_image
 from torchvision.transforms.v2 import Transform
 
-sys.path.append(str((Path(__file__) / "..").resolve()))
-from dataset_registry import register_dataset
+from .dataset_registry import register_dataset
 
 
 @register_dataset({"split": "train"}, {"split": "val"}, meta="Cityscapes")

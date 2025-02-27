@@ -1,6 +1,4 @@
 import random
-import sys
-from pathlib import Path
 from timeit import default_timer
 from typing import Sequence
 
@@ -12,9 +10,8 @@ from torch.optim import Optimizer
 from torch.utils import data
 from torchvision.transforms import v2
 
-sys.path.append(str((Path(__file__) / "../../..").resolve()))
-from src.utils.metrics import MetricStore
-from src.utils.visual import draw_mask_on_image
+from ..utils.metrics import MetricStore
+from ..utils.visual import draw_mask_on_image
 
 
 def forward_batch(

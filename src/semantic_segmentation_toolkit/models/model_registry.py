@@ -4,8 +4,7 @@ from typing import Callable, ParamSpec, TypeVar
 
 from torch import nn
 
-sys.path.append(str((Path(__file__) / "..").resolve()))
-from model_api import MODEL_WEIGHTS, MODEL_ZOO, SegWeightsEnum
+from .model_api import MODEL_WEIGHTS, MODEL_ZOO, SegWeightsEnum
 
 T = TypeVar("T", bound=nn.Module)
 P = ParamSpec("P")

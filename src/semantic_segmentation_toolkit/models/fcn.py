@@ -1,23 +1,21 @@
-import sys
-from pathlib import Path
-
 from torch import nn
 from torch.hub import load_state_dict_from_url
-from torchvision.models import *  # type: ignore
-from torchvision.models import segmentation
-from torchvision.models.segmentation.fcn import FCN, FCNHead
+from torchvision import models as TM
+from torchvision.models.segmentation.fcn import (
+    FCN,
+    FCNHead,
+    fcn_resnet50,
+    fcn_resnet101,
+)
 
-sys.path.append(str((Path(__file__) / "..").resolve()))
-from backbones import *
-from model_api import SegWeights, SegWeightsEnum
-from model_registry import register_model
+from ..datasets.pytorch_datasets import VOC_LABELS
+from ..utils.transform import SegmentationAugment
+from .backbones import *
+from .model_api import SegWeights, SegWeightsEnum
+from .model_registry import register_model
 
-sys.path.append(str((Path(__file__) / "../../..").resolve()))
-from src.datasets.pytorch_datasets import VOC_LABELS
-from src.utils.transform import SegmentationAugment
-
-register_model()(segmentation.fcn_resnet50)
-register_model()(segmentation.fcn_resnet101)
+register_model()(fcn_resnet50)
+register_model()(fcn_resnet101)
 
 
 class FCN_ResNet34_Weights(SegWeightsEnum):
@@ -36,7 +34,7 @@ def fcn_resnet34(
     weights: FCN_ResNet34_Weights | str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
-    weights_backbone: ResNet34_Weights | str | None = ResNet34_Weights.DEFAULT,
+    weights_backbone: TM.ResNet34_Weights | str | None = TM.ResNet34_Weights.DEFAULT,
 ) -> nn.Module:
     weights_model = FCN_ResNet34_Weights.resolve(weights)
     if num_classes is None:
@@ -49,7 +47,7 @@ def fcn_resnet34(
                 f"={len(weights_model.labels)}, but got {num_classes}"
             )
 
-    backbone_model = resnet34(weights=weights_backbone, progress=progress)
+    backbone_model = TM.resnet34(weights=weights_backbone, progress=progress)
     backbone = ResNetBackbone(backbone_model)
     replace_layer_name(backbone, {-1: "out", -2: "aux"})
 
@@ -71,15 +69,15 @@ def fcn_mobilenet_v3_large(
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: (
-        MobileNet_V3_Large_Weights | str | None
-    ) = MobileNet_V3_Large_Weights.DEFAULT,
+        TM.MobileNet_V3_Large_Weights | str | None
+    ) = TM.MobileNet_V3_Large_Weights.DEFAULT,
 ) -> nn.Module:
     if weights is not None:
         raise NotImplementedError("Weights is not supported yet")
     if num_classes is None:
         num_classes = 21
 
-    backbone_model = mobilenet_v3_large(weights=weights_backbone, progress=progress)
+    backbone_model = TM.mobilenet_v3_large(weights=weights_backbone, progress=progress)
     backbone = MobileNetV3Backbone(backbone_model)
     replace_layer_name(backbone, {-1: "out", -4: "aux"})
 
@@ -95,14 +93,14 @@ def fcn_vgg16(
     weights: str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
-    weights_backbone: VGG16_Weights | str | None = VGG16_Weights.DEFAULT,
+    weights_backbone: TM.VGG16_Weights | str | None = TM.VGG16_Weights.DEFAULT,
 ) -> nn.Module:
     if weights is not None:
         raise NotImplementedError("Weights is not supported yet")
     if num_classes is None:
         num_classes = 21
 
-    backbone_model = vgg16(weights=weights_backbone, progress=progress)
+    backbone_model = TM.vgg16(weights=weights_backbone, progress=progress)
     backbone = VGGBackbone(backbone_model)
     replace_layer_name(backbone, {-1: "out", -2: "aux"})
 

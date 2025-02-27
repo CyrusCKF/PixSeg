@@ -4,8 +4,6 @@ See `tasks/inference.ipynb` for demo and usage
 """
 
 import itertools
-import sys
-from pathlib import Path
 from typing import Sequence
 
 import numpy as np
@@ -16,8 +14,7 @@ from torch.nn import functional as F
 from torchvision.transforms import v2
 from torchvision.transforms.v2 import functional as TF
 
-sys.path.append(str((Path(__file__) / "../../..").resolve()))
-from src.utils.transform import RandomRescale
+from ..utils.transform import RandomRescale
 
 
 def refine_prob_by_crf(prob: np.ndarray, image: Tensor | None, iter=5) -> np.ndarray:

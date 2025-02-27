@@ -14,12 +14,9 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.utils import data
 from torchvision.transforms import v2
 
-sys.path.append(str((Path(__file__) / "..").resolve()))
-import engine
-from logger import Logger
-
-sys.path.append(str((Path(__file__) / "../../..").resolve()))
-from src.utils.metrics import MetricStore
+from ..utils.metrics import MetricStore
+from . import engine
+from .logger import Logger
 
 logger = logging.getLogger(__name__)
 

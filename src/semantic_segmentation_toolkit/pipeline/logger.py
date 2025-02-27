@@ -1,7 +1,6 @@
 import logging
 import os
 import socket
-import sys
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -16,8 +15,7 @@ from torch import Tensor
 from torch.utils.tensorboard.writer import SummaryWriter
 from torchvision.transforms.v2 import functional as TF
 
-sys.path.append(str((Path(__file__) / "../../..").resolve()))
-from src.utils import visual
+from ..utils import visual
 
 logger = logging.getLogger(__name__)
 

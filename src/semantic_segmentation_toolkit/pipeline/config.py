@@ -1,5 +1,4 @@
 import logging
-import sys
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -14,15 +13,12 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.utils import data
 from torchvision.transforms import v2
 
-sys.path.append(str((Path(__file__) / "..").resolve()))
-from logger import LocalLogger, Logger, TensorboardLogger, WandbLogger
-from trainer import Trainer
-
-sys.path.append(str((Path(__file__) / "../../..").resolve()))
-from src.datasets import DATASET_ZOO, DatasetMeta, resolve_metadata
-from src.learn import CLASS_WEIGHTINGS, CRITERION_ZOO, LR_SCHEDULER_ZOO, OPTIMIZER_ZOO
-from src.models import MODEL_WEIGHTS, MODEL_ZOO
-from src.utils.transform import SegmentationAugment, SegmentationTransform
+from ..datasets import DATASET_ZOO, DatasetMeta, resolve_metadata
+from ..learn import CLASS_WEIGHTINGS, CRITERION_ZOO, LR_SCHEDULER_ZOO, OPTIMIZER_ZOO
+from ..models import MODEL_WEIGHTS, MODEL_ZOO
+from ..utils.transform import SegmentationAugment, SegmentationTransform
+from .logger import LocalLogger, Logger, TensorboardLogger, WandbLogger
+from .trainer import Trainer
 
 logger = logging.getLogger(__name__)
 
@@ -295,18 +291,3 @@ def safe_transfer_state_dict(model: nn.Module, state_dict: dict[str, Tensor]):
             f"Transfer completed. Found abnormal keys:"
             f" {missing_keys=}, {unexpected_keys=}, {mismatch_keys=}"
         )
-
-
-def _test():
-    import toml
-
-    logging.basicConfig(level=logging.DEBUG)
-
-    config_toml = toml.load(r"doc\sample_config.toml")
-    config_toml["data"]["dataset"]["params"]["root"] = r"dataset"
-    config = Config(config_toml)
-    trainer = config.to_trainer()
-
-
-if __name__ == "__main__":
-    _test()

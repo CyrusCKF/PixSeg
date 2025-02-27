@@ -1,6 +1,4 @@
 import random
-import sys
-from pathlib import Path
 from typing import Any, Dict, Sequence
 
 import torch
@@ -8,8 +6,7 @@ from torch import Tensor, nn
 from torchvision.transforms import v2
 from torchvision.transforms.v2 import functional as TF
 
-sys.path.append(str((Path(__file__) / "..").resolve()))
-from rng import get_rng_state, set_rng_state
+from .rng import get_rng_state, set_rng_state
 
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STDDEV = (0.229, 0.224, 0.225)

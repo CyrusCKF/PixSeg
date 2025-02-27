@@ -8,7 +8,7 @@ from torch import Tensor, nn
 from torchvision.models import *  # type: ignore
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
-from src.models.backbones import *
+from src.semantic_segmentation_toolkit.models.backbones import *
 
 parameters = [
     (ResNetBackbone, resnet18, lambda x: x.layer_channels()),
@@ -39,7 +39,7 @@ def test_backbone(
         assert out.size(1) == channels[k]
 
 
-def main():
+def _main():
     import torch
     from torchinfo import summary
 
@@ -57,4 +57,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    _main()

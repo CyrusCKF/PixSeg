@@ -1,16 +1,11 @@
-import sys
-from pathlib import Path
-from typing import Any, Callable, Literal
+from typing import Any, Callable
 
 import numpy as np
 from PIL import Image
-from torch.utils.data import Dataset
 from torchvision import datasets
-from torchvision.transforms.v2 import Transform
 
-sys.path.append(str((Path(__file__) / "..").resolve()))
-from dataset_api import DatasetMeta
-from dataset_registry import register_dataset
+from .dataset_api import DatasetMeta
+from .dataset_registry import register_dataset
 
 # fmt: off
 CITYSCAPES_FULL_LABELS = (

@@ -1,14 +1,11 @@
 import math
-import sys
-from pathlib import Path
 from typing import Callable, ParamSpec, TypeVar
 
 import torch
 from torch import Tensor, optim
 from torch.optim.optimizer import ParamsT
 
-sys.path.append(str((Path(__file__) / "..").resolve()))
-from learn_api import OPTIMIZER_ZOO
+from .learn_api import OPTIMIZER_ZOO
 
 T = TypeVar("T", bound=optim.Optimizer)
 P = ParamSpec("P")

@@ -9,8 +9,8 @@ from torch import Tensor
 from torch.utils.data import Subset
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
-from src.datasets import *
-from src.utils.transform import SegmentationTransform
+from src.semantic_segmentation_toolkit.datasets import *
+from src.semantic_segmentation_toolkit.utils.transform import SegmentationTransform
 
 
 def test_registry():
@@ -69,14 +69,16 @@ def test_dataset_with_format(name, dataset_roots, test_size=10):
             ), f"Unexpected classes in dataset {name}: {unique_unexpected}"
 
 
-def main():
+def _main():
+    from pprint import pprint
+
     import numpy as np
     from PIL import Image
     from torch.utils.data import Dataset
     from torchvision import datasets
 
-    print(DATASET_ZOO)
-    print(DATASET_METADATA)
+    pprint(DATASET_ZOO, width=150, compact=True)
+    pprint(DATASET_METADATA, width=150, compact=True)
 
     dataset: Dataset = datasets.Cityscapes(
         root=r"..\segmentation-backend\example_datasets\cityscapes",
@@ -90,4 +92,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    _main()

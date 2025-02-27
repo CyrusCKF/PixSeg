@@ -1,11 +1,7 @@
-import sys
-from pathlib import Path
-
 from torchvision import datasets
 
-sys.path.append(str((Path(__file__) / "..").resolve()))
-from dataset_api import DatasetMeta
-from dataset_registry import register_dataset
+from .dataset_api import DatasetMeta
+from .dataset_registry import register_dataset
 
 # fmt: off
 VOC_LABELS = ("background",
@@ -33,15 +29,3 @@ register_dataset(
     meta="VOC",
     name="SBD",
 )(datasets.SBDataset)
-
-
-def _test():
-    from dataset_registry import DATASET_ZOO
-
-    entry = DATASET_ZOO["VOC"]
-    train_dataset = entry.construct_train(root=r"dataset", year="2007")
-    print(len(train_dataset))  # type: ignore
-
-
-if __name__ == "__main__":
-    _test()

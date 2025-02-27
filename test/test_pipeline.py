@@ -10,9 +10,9 @@ import torch
 from torch.utils.data import Dataset
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
-from src.datasets import register_dataset
-from src.pipeline import Config
-from src.utils.rng import seed
+from src.semantic_segmentation_toolkit.datasets import register_dataset
+from src.semantic_segmentation_toolkit.pipeline import Config
+from src.semantic_segmentation_toolkit.utils.rng import seed
 
 NUM_FAKE_CLASSES = 10
 
@@ -56,3 +56,20 @@ def test_config_trainer(path=r"doc\sample_config.toml"):
             f"Test completed successfully, but outputs are not cleant up."
             f" Please check the output folder {config.out_folder}"
         )
+
+
+def _main():
+    import logging
+
+    import toml
+
+    logging.basicConfig(level=logging.DEBUG)
+
+    config_toml = toml.load(r"doc\sample_config.toml")
+    config_toml["data"]["dataset"]["params"]["root"] = r"dataset"
+    config = Config(config_toml)
+    trainer = config.to_trainer()
+
+
+if __name__ == "__main__":
+    _main()

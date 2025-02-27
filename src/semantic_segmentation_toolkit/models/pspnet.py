@@ -1,5 +1,3 @@
-import sys
-from pathlib import Path
 from typing import Literal, Sequence
 
 import torch
@@ -10,14 +8,11 @@ from torchvision.models.resnet import *  # type: ignore
 from torchvision.models.segmentation._utils import _SimpleSegmentationModel
 from torchvision.models.segmentation.fcn import FCNHead
 
-sys.path.append(str((Path(__file__) / "..").resolve()))
-from backbones import ResNetBackbone, replace_layer_name
-from model_api import SegWeights, SegWeightsEnum
-from model_registry import register_model
-
-sys.path.append(str((Path(__file__) / "../../..").resolve()))
-from src.datasets.pytorch_datasets import VOC_LABELS
-from src.utils.transform import SegmentationAugment
+from ..datasets.pytorch_datasets import VOC_LABELS
+from ..utils.transform import SegmentationAugment
+from .backbones import ResNetBackbone, replace_layer_name
+from .model_api import SegWeights, SegWeightsEnum
+from .model_registry import register_model
 
 
 class PSPNet(_SimpleSegmentationModel):

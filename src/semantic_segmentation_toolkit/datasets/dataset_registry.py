@@ -1,11 +1,8 @@
-import sys
-from pathlib import Path
 from typing import Callable, ParamSpec, TypeVar
 
 from torch.utils.data import Dataset
 
-sys.path.append(str((Path(__file__) / "..").resolve()))
-from dataset_api import DATASET_METADATA, DATASET_ZOO, DatasetEntry, DatasetMeta
+from .dataset_api import DATASET_METADATA, DATASET_ZOO, DatasetEntry, DatasetMeta
 
 T = TypeVar("T", bound=Dataset)
 P = ParamSpec("P")
@@ -49,15 +46,3 @@ def resolve_metadata(key: str) -> DatasetMeta:
         return resolve_metadata(meta_entry)
     except KeyError:
         raise KeyError(f"Cannot resolve metadata for key {key}")
-
-
-if __name__ == "__main__":
-    import sys
-    from pathlib import Path
-
-    sys.path.append(str((Path(__file__) / "..").resolve()))
-    import pytorch_datasets
-
-    print(DATASET_ZOO.keys())
-    print(DATASET_METADATA.keys())
-    print(resolve_metadata("SBD"))
