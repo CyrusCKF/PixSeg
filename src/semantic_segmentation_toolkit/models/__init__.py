@@ -7,4 +7,4 @@ from .model_registry import (
     SegWeightsEnum,
     register_model,
 )
-from .pspnet import PSPNet, pspnet_resnet50
+from .pspnet import PSPNet, PSPNET_ResNet50_Weights, pspnet_resnet50

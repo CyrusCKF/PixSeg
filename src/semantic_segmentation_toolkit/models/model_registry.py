@@ -40,7 +40,15 @@ class SegWeightsEnum(Enum):
         if obj is None or isinstance(obj, SegWeights):
             return obj
         if isinstance(obj, str):
-            obj = cls[obj.replace(cls.__name__ + ".", "")]
+            weight_name = obj.replace(cls.__name__ + ".", "")
+            # use try/catch not other checking because duplicate enum member cannot be found
+            try:
+                obj = cls[weight_name]
+            except:
+                raise ValueError(
+                    f"Failed to find Weights {weight_name} in {cls.__name__}."
+                    f" Try one of {[e.name for e in cls]}"
+                ) from None
         if not isinstance(obj, cls):
             raise TypeError(
                 f"Invalid obj provided; expected {cls.__name__} but"
