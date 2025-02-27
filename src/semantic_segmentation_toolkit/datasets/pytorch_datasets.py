@@ -1,7 +1,6 @@
 from torchvision import datasets
 
-from .dataset_api import DatasetMeta
-from .dataset_registry import register_dataset
+from .dataset_registry import DatasetMeta, register_dataset
 
 # fmt: off
 VOC_LABELS = ("background",

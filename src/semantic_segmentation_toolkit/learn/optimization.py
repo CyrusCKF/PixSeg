@@ -5,7 +5,7 @@ import torch
 from torch import Tensor, optim
 from torch.optim.optimizer import ParamsT
 
-from .learn_api import OPTIMIZER_ZOO
+OPTIMIZER_ZOO: dict[str, Callable[..., optim.Optimizer]] = {}
 
 T = TypeVar("T", bound=optim.Optimizer)
 P = ParamSpec("P")

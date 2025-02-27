@@ -74,20 +74,20 @@ def metrics_from_confusion(cm: np.ndarray) -> dict[str, float]:
     acc: np.ndarray = TP.sum() / cm.sum()
     metrics["acc"] = cast(float, acc.item())
 
-    cat_accs: np.ndarray = TP / (TP + FN + epsilon)
-    mean_acc: np.ndarray = cat_accs.mean()
+    class_accs: np.ndarray = TP / (TP + FN + epsilon)
+    mean_acc: np.ndarray = class_accs.mean()
     metrics["macc"] = cast(float, mean_acc.item())
 
-    cat_ious = TP / (TP + FP + FN + epsilon)
-    mean_iou: np.ndarray = cat_ious.mean()
+    class_ious = TP / (TP + FP + FN + epsilon)
+    mean_iou: np.ndarray = class_ious.mean()
     metrics["miou"] = cast(float, mean_iou.item())
 
     frequency = (TP + FN) / cm.sum()
-    fwiou: np.ndarray = (cat_ious * frequency).sum()
+    fwiou: np.ndarray = (class_ious * frequency).sum()
     metrics["fwiou"] = cast(float, fwiou.item())
 
-    cat_dices = 2 * TP / (2 * TP + FP + FN + epsilon)
-    mean_dice: np.ndarray = cat_dices.mean()
+    class_dices = 2 * TP / (2 * TP + FP + FN + epsilon)
+    mean_dice: np.ndarray = class_dices.mean()
     metrics["dice"] = cast(float, mean_dice.item())
 
     return metrics

@@ -10,8 +10,7 @@ from torchvision.models.segmentation.fcn import (
 
 from ..datasets.pytorch_datasets import VOC_LABELS
 from .backbones import *
-from .model_api import SegWeights, SegWeightsEnum
-from .model_registry import register_model
+from .model_registry import SegWeights, SegWeightsEnum, register_model
 
 register_model()(fcn_resnet50)
 register_model()(fcn_resnet101)

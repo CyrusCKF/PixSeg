@@ -12,6 +12,8 @@ from src.semantic_segmentation_toolkit.models import *
 
 def test_registry():
     assert len(MODEL_ZOO) >= 0
+    assert len(MODEL_WEIGHTS) >= 0
+    assert set(MODEL_ZOO.keys()).issuperset(set(MODEL_WEIGHTS.keys()))
 
 
 @pytest.mark.parametrize("model_builder", MODEL_ZOO.values())

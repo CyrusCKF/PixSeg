@@ -7,7 +7,8 @@ from torch.nn import CrossEntropyLoss
 from torch.nn import functional as F
 from torch.nn.modules.loss import _Loss, _WeightedLoss
 
-from .learn_api import CRITERION_ZOO
+CRITERION_ZOO: dict[str, Callable[..., _Loss]] = {}
+"""Criterions must accept kwargs `weight (Tensor)` and `ignore_index (int)`"""
 
 P = ParamSpec("P")
 

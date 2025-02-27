@@ -10,8 +10,7 @@ from torchvision.models.segmentation.fcn import FCNHead
 
 from ..datasets import CITYSCAPES_LABELS, VOC_LABELS
 from .backbones import ResNetBackbone, replace_layer_name
-from .model_api import SegWeights, SegWeightsEnum
-from .model_registry import register_model
+from .model_registry import SegWeights, SegWeightsEnum, register_model
 
 
 class PSPNet(_SimpleSegmentationModel):

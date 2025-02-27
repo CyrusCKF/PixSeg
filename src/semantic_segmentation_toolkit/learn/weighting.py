@@ -1,9 +1,15 @@
+from typing import Callable
+
 import torch
 import tqdm
+from torch import Tensor
 from torch.utils.data import Dataset
 from torchvision.transforms.v2 import functional as TF
 
-from .learn_api import CLASS_WEIGHTINGS, WeightingFunc
+WeightingFunc = Callable[[Dataset, int], Tensor | None]
+CLASS_WEIGHTINGS: dict[str, WeightingFunc] = {}
+"""Each class weighting strategy takes in a Dataset and number of classes 
+and returns a list of weighting or None"""
 
 
 def register_weighting(name: str | None = None):

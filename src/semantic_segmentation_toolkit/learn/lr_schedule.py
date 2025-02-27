@@ -3,7 +3,7 @@ from typing import Callable, ParamSpec, TypeVar
 from torch.optim import lr_scheduler
 from torch.optim.lr_scheduler import LRScheduler
 
-from .learn_api import LR_SCHEDULER_ZOO
+LR_SCHEDULER_ZOO: dict[str, Callable[..., LRScheduler]] = {}
 
 T = TypeVar("T", bound=LRScheduler)
 P = ParamSpec("P")

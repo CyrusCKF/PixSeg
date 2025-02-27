@@ -9,10 +9,11 @@ from .cityscapes import (
     CityscapesCategory,
     CityscapesClass,
 )
-from .dataset_api import DatasetEntry, DatasetMeta
 from .dataset_registry import (
     DATASET_METADATA,
     DATASET_ZOO,
+    DatasetEntry,
+    DatasetMeta,
     register_dataset,
     resolve_metadata,
 )
