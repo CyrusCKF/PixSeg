@@ -26,7 +26,7 @@ def init_logging(log_file: Path | None):
 
     Closes all handlers when done
     """
-    FORMAT = r"%(asctime)s :: %(name)s.%(levelname)-8s :: %(message)s"
+    FORMAT = r"%(asctime)s :: %(levelname)-8s :: %(message)s"
     DATEFMT = r"%Y-%m-%d %H:%M:%S"
     handlers: list[logging.Handler] = [logging.StreamHandler()]
     handlers[0].setLevel(logging.INFO)

@@ -14,8 +14,8 @@ from .model_registry import SegWeights, SegWeightsEnum, register_model
 
 
 class PSPNet(_SimpleSegmentationModel):
-    """Implements PSPNet model from [Pyramid Scene Parsing
-    Network](<https://arxiv.org/abs/1612.01105>)"""
+    """Implements PSPNet from [Pyramid Scene Parsing
+    Network](https://arxiv.org/abs/1612.01105)"""
 
 
 class PSPHead(nn.Module):
@@ -41,12 +41,12 @@ class PSPHead(nn.Module):
             self.poolings.append(nn.Sequential(*mods))
 
         pyramid_channels = in_channels + out_chan * len(pooling_sizes)
-        self.bottleneck = nn.Sequential(
-            nn.Conv2d(pyramid_channels, out_channels, 3, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(),
-        )
-        self.head = FCNHead(out_channels, out_channels)
+        # self.bottleneck = nn.Sequential(
+        #     nn.Conv2d(pyramid_channels, out_channels, 3, padding=1, bias=False),
+        #     nn.BatchNorm2d(out_channels),
+        #     nn.ReLU(),
+        # )
+        self.head = FCNHead(pyramid_channels, out_channels)
 
     def forward(self, x: Tensor) -> Tensor:
         pools: list[Tensor] = []
@@ -54,8 +54,8 @@ class PSPHead(nn.Module):
             pool = pooling(x)
             pools.append(F.interpolate(pool, x.shape[2:], mode="bilinear"))
 
-        feature_and_pools = torch.cat([x, *pools], dim=1)
-        out = self.bottleneck(feature_and_pools)
+        out = torch.cat([x, *pools], dim=1)
+        # out = self.bottleneck(out)
         out = self.head(out)
         return out
 
