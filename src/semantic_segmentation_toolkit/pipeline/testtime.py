@@ -127,7 +127,7 @@ def threshold_prob(prob: np.ndarray, threshold=0.5) -> dict[int, np.ndarray]:
 
 
 #####
-# region Augmentations
+# region Augmentations & Sliding
 #####
 
 
@@ -206,4 +206,41 @@ def inference_with_augmentations(
         logits = F.interpolate(logits, image_size, mode="bilinear")
         results.append(logits)
 
+    return torch.stack(results)
+
+
+def inference_with_sliding_window(
+    model: nn.Module, images: Tensor, window_size: tuple[int, int]
+):
+    """
+    Args:
+        images (float Tensor (batch_size, num_channels, height, width)): Images after
+            applying any preliminary augmentations
+
+    Returns:
+        logits (Tensor (num_windows, batch_size, num_classes, height, width)):
+            inference results of all windows
+    """
+    start_indices: list[list[int]] = []  # start for each dim
+    for i, window in enumerate(window_size):
+        start_indices.append([])
+        size = images.shape[2 + i]
+        cur_idx = 0
+        while cur_idx < size:
+            start_indices[i].append(cur_idx)
+            cur_idx += window
+
+    results: list[Tensor] = []
+    for start in itertools.product(*start_indices):
+        # skip first 2 indices
+        slices = [slice(None), slice(None)] + [
+            slice(s, s + w) for s, w in zip(start, window_size)
+        ]
+        cropped_image = images[slices]
+
+        logits: Tensor = model(cropped_image)["out"]
+        logits = F.interpolate(logits, window_size, mode="bilinear")
+        logits_put_back = torch.zeros(logits.shape[:2] + images.shape[2:])
+        logits_put_back[slices] = logits
+        results.append(logits_put_back)
     return torch.stack(results)
