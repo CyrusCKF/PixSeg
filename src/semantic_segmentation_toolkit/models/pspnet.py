@@ -41,16 +41,22 @@ class PSPHead(nn.Module):
             self.poolings.append(nn.Sequential(*mods))
 
         pyramid_channels = in_channels + out_chan * len(pooling_sizes)
-        self.head = FCNHead(pyramid_channels, out_channels)
+        self.bottleneck = nn.Sequential(
+            nn.Conv2d(pyramid_channels, out_channels, 3, padding=1, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(),
+        )
+        self.head = FCNHead(out_channels, out_channels)
 
     def forward(self, x: Tensor) -> Tensor:
         pools: list[Tensor] = []
         for pooling in self.poolings:
             pool = pooling(x)
-            pools.append(F.interpolate(pool, x.shape[-2:], mode="bilinear"))
+            pools.append(F.interpolate(pool, x.shape[2:], mode="bilinear"))
 
         feature_and_pools = torch.cat([x, *pools], dim=1)
-        out = self.head(feature_and_pools)
+        out = self.bottleneck(feature_and_pools)
+        out = self.head(out)
         return out
 
 
@@ -94,4 +100,9 @@ def pspnet_resnet50(
     channels = backbone.layer_channels()
     aux_classifier = FCNHead(channels["aux"], num_classes) if aux_loss else None
     classifier = PSPHead(channels["out"], num_classes)
-    return PSPNet(backbone, classifier, aux_classifier)
+    model = PSPNet(backbone, classifier, aux_classifier)
+
+    if weights_model is not None:
+        state_dict = load_state_dict_from_url(weights_model.url, progress=progress)
+        model.load_state_dict(state_dict)
+    return model
