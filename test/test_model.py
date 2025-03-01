@@ -32,8 +32,8 @@ def _main():
 
     import torchinfo
 
-    model = pspnet_resnet50()
-    print(torchinfo.summary(model, [4, 3, 32, 56]))
+    model = fcn_resnet34()
+    torchinfo.summary(model, [4, 3, 31, 55])
     print(model)
 
     pprint(MODEL_ZOO)

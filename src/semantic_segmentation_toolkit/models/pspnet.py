@@ -4,7 +4,7 @@ import torch
 from torch import Tensor, nn
 from torch.hub import load_state_dict_from_url
 from torch.nn import functional as F
-from torchvision.models.resnet import *  # type: ignore
+from torchvision.models.resnet import ResNet50_Weights, resnet50
 from torchvision.models.segmentation._utils import _SimpleSegmentationModel
 from torchvision.models.segmentation.fcn import FCNHead
 
@@ -67,7 +67,7 @@ class PSPNET_ResNet50_Weights(SegWeightsEnum):
         "Trained on PASCAL VOC 2012 dataset",
     )
     CITYSCAPES_FINE = SegWeights(
-        "pspnet/pspnet_resnet50-cityscapes-512x1024-20250226.pth",
+        "pspnet/pspnet_resnet50-cityscapes-512x1024-20250301.pth",
         CITYSCAPES_LABELS,
         "Trained on Cityscapes (fine) dataset",
     )

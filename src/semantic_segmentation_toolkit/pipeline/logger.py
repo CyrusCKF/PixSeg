@@ -8,12 +8,13 @@ from typing import Sequence
 
 import numpy as np
 import torch
-import wandb
 import wandb.wandb_run
 from PIL.Image import Image
 from torch import Tensor
 from torch.utils.tensorboard.writer import SummaryWriter
 from torchvision.transforms.v2 import functional as TF
+
+import wandb
 
 from ..utils import visual
 
@@ -193,7 +194,7 @@ class WandbLogger(Logger):
         # hopefully this will be implemented soon
         # https://github.com/wandb/wandb/issues/6286#issuecomment-2638797167
         # Currently, view all using the "Query panel" with "runs.history.concat["val/snapshot"]"
-        if self.run is None:
+        if self.run is None or not self.save_images:
             return
         columns = ["Step", "Image", "Ground truths", "Predictions"]
         data = [
