@@ -7,10 +7,13 @@ from torch.nn import functional as F
 from .model_registry import SegWeights, SegWeightsEnum, register_model
 
 
-def _pad_to_even_size(x: Tensor):
+def _pad_to_even_size(x: Tensor, value):
     # pad so that input is even for each downsample; otherwise unpooling is messy to deal with
-    pad_size = [p for s in x.shape[2:] for p in ([0, 0] if s % 2 == 0 else [0, 1])]
-    return F.pad(x, pad_size)
+    pad_size: list[int] = []
+    for size in x.shape[-1:1:-1]:  # get size in reverse order to the third dim
+        to_pad = [0, 0] if size % 2 == 0 else [0, 1]
+        pad_size.extend(to_pad)
+    return F.pad(x, pad_size, value=value)
 
 
 class ENet(nn.Module):
@@ -65,15 +68,12 @@ class ENet(nn.Module):
     def forward(self, x: Tensor) -> dict[str, Tensor]:
         out: Tensor = x
         input_size = out.shape
-        out = _pad_to_even_size(out)
         out = self.initial(out)
 
-        out = _pad_to_even_size(out)
         section1_size = out.shape
         out, section1_indices = self.section1_down(out)
         out = self.section1_convs(out)
 
-        out = _pad_to_even_size(out)
         section2_size = out.shape
         out, section2_indices = self.section2_down(out)
         out = self.section2_convs(out)
@@ -96,11 +96,13 @@ class ENetInitial(nn.Module):
         super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels - 3, 3, stride=2, padding=1)
         self.pool = nn.MaxPool2d(2)
+        self.norm_act = nn.Sequential(nn.BatchNorm2d(out_channels), nn.PReLU())
 
     def forward(self, x: Tensor):
         conv_out = self.conv(x)
-        pool_out = self.pool(x)
+        pool_out = self.pool(_pad_to_even_size(x, -torch.inf))
         out = torch.cat([conv_out, pool_out], dim=1)
+        out = self.norm_act(out)
         return out
 
 
@@ -134,14 +136,16 @@ class ENetBottleneck(nn.Module):
 class ENetUpsampleBottleneck(ENetBottleneck):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.conv_before_unpool = nn.Sequential(
+            nn.Conv2d(self.in_channels, self.out_channels, 1, bias=False),
+            nn.BatchNorm2d(self.out_channels),
+        )
         self.unpool = nn.MaxUnpool2d(2)
 
     def _make_convs(self, in_chan, inter_chan, out_chan) -> list[nn.Module]:
         return [
             nn.Conv2d(in_chan, inter_chan, 1, bias=False),
-            nn.ConvTranspose2d(
-                inter_chan, inter_chan, 3, stride=2, padding=1, bias=False
-            ),
+            nn.ConvTranspose2d(inter_chan, inter_chan, 2, stride=2, bias=False),
             nn.Conv2d(inter_chan, out_chan, 1, bias=False),
         ]
 
@@ -152,11 +156,9 @@ class ENetUpsampleBottleneck(ENetBottleneck):
                 main_out = main(main_out, output_size=output_size)
             else:
                 main_out = main(main_out)
-        pool_out = self.unpool(
-            x[:, : pooling_indices.size(1)], pooling_indices, output_size
-        )
-        out = main_out
-        out[:, : pool_out.size(1)] += pool_out
+        pool_out = self.conv_before_unpool(x)
+        pool_out = self.unpool(pool_out, pooling_indices, output_size)
+        out = main_out + pool_out
         out = self.final_act(out)
         return out
 

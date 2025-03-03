@@ -15,7 +15,7 @@ class BDD100K(Dataset):
     def __init__(
         self,
         root: Path | str,
-        split: Literal["train", "val"],
+        split: Literal["train", "val", "test"],
         transforms: Transform | None = None,
     ) -> None:
         self.transforms = transforms
@@ -23,6 +23,11 @@ class BDD100K(Dataset):
         root_path = Path(root)
         image_folder = root_path / rf"images\10k\{split}"
         image_files = list(image_folder.glob("*.jpg"))
+        if split == "test":
+            self.image_files = image_files
+            self.target_files = None
+            return
+
         target_folder = root_path / rf"labels\sem_seg\masks\{split}"
         target_files = list(target_folder.glob("*.png"))
 
@@ -42,7 +47,10 @@ class BDD100K(Dataset):
 
     def __getitem__(self, index) -> Any:
         image = decode_image(self.image_files[index], ImageReadMode.RGB)
-        target = decode_image(self.target_files[index])
+        if self.target_files is None:
+            target = None
+        else:
+            target = decode_image(self.target_files[index])
         if self.transforms is not None:
             image, target = self.transforms(image, target)
         return image, target

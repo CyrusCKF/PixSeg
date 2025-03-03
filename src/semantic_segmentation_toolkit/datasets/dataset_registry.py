@@ -109,7 +109,7 @@ def resolve_metadata(key: str) -> DatasetMeta:
             return meta_entry
         return resolve_metadata(meta_entry)
     except KeyError:
-        raise KeyError(f"Cannot resolve metadata for key {key}")
+        raise KeyError(f"Cannot resolve metadata for key {key}") from None
 
 
 def _generate_voc_palette(num_classes) -> Sequence[tuple[int, int, int]]:

@@ -1,8 +1,11 @@
 # root of datasets for testing
 # empty string is neglected
+ADE20K = ''
 BDD100K = ''
 Cityscapes = ''
 CityscapesCategory = ''
 CityscapesFull = ''
+LIP = ''
+Mapillary = ''
 SBD = ''
 VOC = ''

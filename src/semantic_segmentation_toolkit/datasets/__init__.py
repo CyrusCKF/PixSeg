@@ -1,3 +1,4 @@
+from .ade20k import ADE20K
 from .bdd100k import BDD100K
 from .cityscapes import (
     CITYSCAPES_CATEGORY_COLORS,
@@ -16,5 +17,13 @@ from .dataset_registry import (
     DatasetMeta,
     register_dataset,
     resolve_metadata,
+)
+from .lip import LIP, LIP_LABELS
+from .mapillary import (
+    MAPILLARY_COLORS,
+    MAPILLARY_FULL_COLORS,
+    MAPILLARY_FULL_LABELS,
+    MAPILLARY_LABELS,
+    MapillaryVistas,
 )
 from .pytorch_datasets import VOC_COLORS, VOC_LABELS

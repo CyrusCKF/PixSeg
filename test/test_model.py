@@ -18,7 +18,11 @@ def test_registry():
 
 @pytest.mark.parametrize("model_builder", MODEL_ZOO.values())
 def test_model(model_builder: Callable[..., nn.Module]):
-    model = model_builder(weights_backbone=None)
+    # disable backbone weights if needed
+    try:
+        model = model_builder(weights_backbone=None)
+    except TypeError:
+        model = model_builder()
     fake_input = torch.rand([4, 3, 32, 56])
     fake_output: dict[str, Tensor] = model(fake_input)
     for k, v in fake_output.items():

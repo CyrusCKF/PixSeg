@@ -26,7 +26,6 @@ CITYSCAPES_FULL_COLORS = (
 )
 _CITYSCAPES_TRAIN_IDS = (7, 8, 11, 12, 13, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33)
 _CITYSCAPES_CATEGORY_IDS:dict[str, tuple[int, ...]] = { # this is not frozen, so hide it
-    "void": (0, 1, 2, 3, 4, 5, 6),
     "flat": (7, 8, 9, 10),
     "construction": (11, 12, 13, 14, 15, 16),
     "object": (17, 18, 19, 20),
@@ -37,33 +36,18 @@ _CITYSCAPES_CATEGORY_IDS:dict[str, tuple[int, ...]] = { # this is not frozen, so
 }
 
 # fmt: on
-CITYSCAPES_LABELS = tuple(
-    [CITYSCAPES_FULL_LABELS[i] for i in _CITYSCAPES_TRAIN_IDS] + ["background"]
-)
-CITYSCAPES_COLORS = tuple(
-    [CITYSCAPES_FULL_COLORS[i] for i in _CITYSCAPES_TRAIN_IDS] + [(0, 0, 0)]
-)
-CITYSCAPES_CATEGORY_LABELS = tuple(
-    list(_CITYSCAPES_CATEGORY_IDS.keys()) + ["background"]
-)
+CITYSCAPES_LABELS = tuple([CITYSCAPES_FULL_LABELS[i] for i in _CITYSCAPES_TRAIN_IDS])
+CITYSCAPES_COLORS = tuple([CITYSCAPES_FULL_COLORS[i] for i in _CITYSCAPES_TRAIN_IDS])
+CITYSCAPES_CATEGORY_LABELS = tuple(list(_CITYSCAPES_CATEGORY_IDS.keys()))
 CITYSCAPES_CATEGORY_COLORS = tuple(
     [CITYSCAPES_FULL_COLORS[ids[0]] for ids in _CITYSCAPES_CATEGORY_IDS.values()]
-    + [(0, 0, 0)]
 )
-
-
-register_dataset(
-    {"target_type": "semantic", "split": "train"},
-    {"target_type": "semantic", "split": "val"},
-    meta=DatasetMeta(34, 255, CITYSCAPES_FULL_LABELS, CITYSCAPES_FULL_COLORS),
-    name="CityscapesFull",
-)(datasets.Cityscapes)
 
 
 @register_dataset(
     {"target_type": "semantic", "split": "train"},
     {"target_type": "semantic", "split": "val"},
-    meta=DatasetMeta(20, 255, CITYSCAPES_LABELS, CITYSCAPES_COLORS),
+    meta=DatasetMeta(19, 255, CITYSCAPES_LABELS, CITYSCAPES_COLORS),
     name="Cityscapes",
 )
 class CityscapesClass(datasets.Cityscapes):
@@ -77,7 +61,7 @@ class CityscapesClass(datasets.Cityscapes):
         image, target = super().__getitem__(index)
         assert isinstance(target, Image.Image)
         target_arr = np.array(target)
-        new_target = np.ones_like(target_arr) * 19  # default as background index
+        new_target = np.full_like(target_arr, 255)
         for i, id_ in enumerate(_CITYSCAPES_TRAIN_IDS):
             new_target[target_arr == id_] = i
         target = Image.fromarray(new_target)
@@ -90,10 +74,10 @@ class CityscapesClass(datasets.Cityscapes):
 @register_dataset(
     {"target_type": "semantic", "split": "train"},
     {"target_type": "semantic", "split": "val"},
-    meta=DatasetMeta(9, 255, CITYSCAPES_CATEGORY_LABELS, CITYSCAPES_CATEGORY_COLORS),
+    meta=DatasetMeta(7, 255, CITYSCAPES_CATEGORY_LABELS, CITYSCAPES_CATEGORY_COLORS),
 )
 class CityscapesCategory(datasets.Cityscapes):
-    def __init__(self, *args, only_train=False, **kwargs) -> None:
+    def __init__(self, *args, only_train=True, **kwargs) -> None:
         """See :class:`torchvision.datasets.Cityscapes` for arguments
 
         Args:
@@ -108,7 +92,7 @@ class CityscapesCategory(datasets.Cityscapes):
         image, target = super().__getitem__(index)
         assert isinstance(target, Image.Image)
         target_arr = np.array(target)
-        new_target = np.ones_like(target_arr) * 8  # default as background index
+        new_target = np.full_like(target_arr, 255)
         for cat, ids in _CITYSCAPES_CATEGORY_IDS.items():
             for id_ in ids:
                 if self.only_train and id_ not in _CITYSCAPES_TRAIN_IDS:
