@@ -55,20 +55,19 @@ class BiSeNet(nn.Module):
 
     def forward(self, x: Tensor) -> dict[str, Tensor]:
         spatial_out = self.spatial_path(x)
-        print(f"{spatial_out.shape=}")
         feature_maps: dict[str, Tensor] = self.backbone(x)
-        context_out = self.context_path_stage(feature_maps, spatial_out.shape[2:])
-        print(f"{context_out.shape=}")
-        combined_out = torch.cat([spatial_out, context_out], dim=1)
+        context_outs: list[Tensor] = self.context_path_stage(
+            feature_maps, spatial_out.shape[2:]
+        )
+        combined_out = torch.cat([spatial_out, context_outs[1]], dim=1)
         ffm_out = self.ffm(combined_out)
-        print(f"{ffm_out.shape=}")
 
         main_out = self.head(ffm_out)
-        main_out = F.interpolate(main_out, x.shape[2:])
+        main_out = F.interpolate(main_out, x.shape[2:], mode="bilinear")
         out = {"out": main_out}
         if self.aux_head is not None:
-            aux_out = self.aux_head(context_out)
-            aux_out = F.interpolate(aux_out, x.shape[2:])
+            aux_out = self.aux_head(context_outs[0])
+            aux_out = F.interpolate(aux_out, x.shape[2:], mode="bilinear")
             out["aux"] = aux_out
         return out
 
@@ -90,18 +89,18 @@ class ContextPathStage(nn.Module):
         """feature_maps must contain keys "16x" and "32x"""
         feature_16x, feature_32x = feature_maps["16x"], feature_maps["32x"]
 
-        out = self.global_pool(feature_32x)
-        out = self.conv_global(out)
+        global_out = self.global_pool(feature_32x)
+        global_out = self.conv_global(global_out)
 
-        out = self.arm_32x(feature_32x) + out
-        out = F.interpolate(out, feature_16x.shape[2:])
-        out = self.conv_32x(out)
+        out_32x = self.arm_32x(feature_32x) + global_out
+        out_32x = F.interpolate(out_32x, feature_16x.shape[2:], mode="bilinear")
+        out_32x = self.conv_32x(out_32x)
 
-        out = self.arm_16x(feature_16x) + out
-        out = F.interpolate(out, output_size)
-        out = self.conv_16x(out)
+        out_16x = self.arm_16x(feature_16x) + out_32x
+        out_16x = F.interpolate(out_16x, output_size, mode="bilinear")
+        out_16x = self.conv_16x(out_16x)
 
-        return out
+        return out_32x, out_16x
 
 
 class SpatialPath(nn.Sequential):
@@ -170,5 +169,5 @@ def bisenet_resnet18(
     replace_layer_name(backbone, {-2: "16x", -1: "32x"})
 
     channels = backbone.layer_channels()
-    model = BiSeNet(20, backbone, channels, use_aux=aux_loss)
+    model = BiSeNet(num_classes, backbone, channels, use_aux=aux_loss)
     return model
