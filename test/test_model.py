@@ -36,7 +36,7 @@ def _main():
 
     import torchinfo
 
-    model = fcn_resnet34()
+    model = enet_original()
     torchinfo.summary(model, [4, 3, 31, 55])
     print(model)
 
