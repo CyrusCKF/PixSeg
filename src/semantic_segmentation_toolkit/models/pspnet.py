@@ -11,6 +11,7 @@ from torchvision.models.segmentation.fcn import FCNHead
 from ..datasets import CITYSCAPES_LABELS, VOC_LABELS
 from .backbones import ResNetBackbone, replace_layer_name
 from .model_registry import SegWeights, SegWeightsEnum, register_model
+from .model_utils import _validate_weights_input
 
 
 class PSPNet(_SimpleSegmentationModel):
@@ -83,23 +84,17 @@ def pspnet_resnet50(
     weights_backbone: ResNet50_Weights | str | None = ResNet50_Weights.DEFAULT,
 ):
     weights_model = PSPNET_ResNet50_Weights.resolve(weights)
-    if num_classes is None:
-        num_classes = 21 if weights_model is None else len(weights_model.labels)
-    if weights_model is not None:
-        weights_backbone = None
-        if num_classes != len(weights_model.labels):
-            raise ValueError(
-                f"Model weights {weights_model} expect number of classes"
-                f"={len(weights_model.labels)}, but got {num_classes}"
-            )
+    weights_model, weights_backbone, num_classes = _validate_weights_input(
+        weights_model, weights_backbone, num_classes
+    )
 
     backbone_model = resnet50(weights=weights_backbone, progress=progress)
     backbone = ResNetBackbone(backbone_model)
     replace_layer_name(backbone, {-1: "out", -2: "aux"})
 
     channels = backbone.layer_channels()
-    aux_classifier = FCNHead(channels["aux"], num_classes) if aux_loss else None
     classifier = PSPHead(channels["out"], num_classes)
+    aux_classifier = FCNHead(channels["aux"], num_classes) if aux_loss else None
     model = PSPNet(backbone, classifier, aux_classifier)
 
     if weights_model is not None:

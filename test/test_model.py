@@ -36,13 +36,16 @@ def _main():
 
     import torchinfo
 
-    model = enet_original()
-    torchinfo.summary(model, [4, 3, 31, 55])
-    print(model)
+    from src.semantic_segmentation_toolkit.datasets import CITYSCAPES_LABELS, VOC_LABELS
 
-    pprint(MODEL_ZOO)
+    model = lraspp_resnet18(num_classes=len(CITYSCAPES_LABELS))
+    model.eval()
+    print(model)
+    torchinfo.summary(model, [1, 3, 512, 1024])
+
+    pprint(MODEL_ZOO.keys(), compact=True)
     for key, weights in MODEL_WEIGHTS.items():
-        print(key, [(w.name, w.value.url) for w in weights])
+        print(key, [w.name for w in weights])
 
 
 if __name__ == "__main__":

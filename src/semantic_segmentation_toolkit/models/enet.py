@@ -5,6 +5,7 @@ from torch.nn import functional as F
 
 # from ..datasets import CITYSCAPES_LABELS, VOC_LABELS
 from .model_registry import SegWeights, SegWeightsEnum, register_model
+from .model_utils import _validate_weights_input
 
 
 def _pad_to_even_size(x: Tensor, value):
@@ -219,6 +220,7 @@ class ENetRegularBottleneck(ENetBottleneck):
         return out
 
 
+# not name it enet to prevent name clashing with module
 @register_model("enet")
 def enet_original(
     num_classes: int | None = None,
@@ -227,8 +229,7 @@ def enet_original(
 ):
     if weights is not None:
         raise NotImplementedError("Weights is not supported yet")
-    if num_classes is None:
-        num_classes = 21
+    _, _, num_classes = _validate_weights_input(None, None, num_classes)
 
     model = ENet(num_classes)
     return model

@@ -5,8 +5,10 @@ from torch.nn import functional as F
 from torchvision.models.resnet import ResNet18_Weights, resnet18
 from torchvision.models.segmentation.fcn import FCNHead
 
+from ..datasets import CITYSCAPES_LABELS
 from .backbones import ResNetBackbone, replace_layer_name
-from .model_registry import register_model
+from .model_registry import SegWeights, SegWeightsEnum, register_model
+from .model_utils import _validate_weights_input
 
 
 def _conv_norm_act(
@@ -151,18 +153,27 @@ class FeatureFusionModule(nn.Module):
         return out
 
 
-@register_model()
+class BiSeNet_ResNet18_Weights(SegWeightsEnum):
+    CITYSCAPES_FINE = SegWeights(
+        "bisenet/bisenet_resnet18-cityscapes-512x1024-20250304.pth",
+        CITYSCAPES_LABELS,
+        "Trained on Cityscapes (fine) dataset",
+    )
+    DEFAULT = CITYSCAPES_FINE
+
+
+@register_model(weights_enum=BiSeNet_ResNet18_Weights)
 def bisenet_resnet18(
     num_classes: int | None = None,
-    weights: str | None = None,
+    weights: BiSeNet_ResNet18_Weights | str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: ResNet18_Weights | str | None = ResNet18_Weights.DEFAULT,
 ) -> nn.Module:
-    if weights is not None:
-        raise NotImplementedError("Weights is not supported yet")
-    if num_classes is None:
-        num_classes = 21
+    weights_model = BiSeNet_ResNet18_Weights.resolve(weights)
+    weights_model, weights_backbone, num_classes = _validate_weights_input(
+        weights_model, weights_backbone, num_classes
+    )
 
     backbone_model = resnet18(weights=weights_backbone, progress=progress)
     backbone = ResNetBackbone(backbone_model)
@@ -170,4 +181,8 @@ def bisenet_resnet18(
 
     channels = backbone.layer_channels()
     model = BiSeNet(num_classes, backbone, channels, use_aux=aux_loss)
+
+    if weights_model is not None:
+        state_dict = load_state_dict_from_url(weights_model.url, progress=progress)
+        model.load_state_dict(state_dict)
     return model
