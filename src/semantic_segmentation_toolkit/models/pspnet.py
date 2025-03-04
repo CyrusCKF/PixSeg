@@ -88,7 +88,11 @@ def pspnet_resnet50(
         weights_model, weights_backbone, num_classes
     )
 
-    backbone_model = resnet50(weights=weights_backbone, progress=progress)
+    backbone_model = resnet50(
+        weights=weights_backbone,
+        progress=progress,
+        replace_stride_with_dilation=[False, True, True],
+    )
     backbone = ResNetBackbone(backbone_model)
     replace_layer_name(backbone, {-1: "out", -2: "aux"})
 
