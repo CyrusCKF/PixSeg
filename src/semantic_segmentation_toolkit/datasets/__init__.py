@@ -1,4 +1,4 @@
-from .ade20k import ADE20K
+from .ade20k import ADE20K, ADE20K_LABELS
 from .bdd100k import BDD100K
 from .cityscapes import (
     CITYSCAPES_CATEGORY_COLORS,
@@ -10,6 +10,7 @@ from .cityscapes import (
     CityscapesCategory,
     CityscapesClass,
 )
+from .coco_stuff import COCO_STUFF_LABELS, COCOStuff
 from .dataset_registry import (
     DATASET_METADATA,
     DATASET_ZOO,

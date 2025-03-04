@@ -80,15 +80,22 @@ def _main():
     pprint(DATASET_ZOO, width=150, compact=True)
     pprint(DATASET_METADATA, width=150, compact=True)
 
-    dataset: Dataset = datasets.Cityscapes(
-        root=r"..\segmentation-backend\example_datasets\cityscapes",
-        target_type="semantic",
-        split="val",
+    dataset: Dataset = ADE20K(
+        root=r"D:\_Dataset\ADEChallengeData2016", split="validation"
     )
-    data: tuple[Image.Image, Image.Image] = dataset[1]
-    image, mask = data
-    mask_arr = np.array(mask)
-    print(mask.size, np.unique(mask_arr))
+    data: tuple[Image.Image | Tensor, Image.Image | Tensor] = dataset[1]
+    _, mask = data
+    if isinstance(mask, Tensor):
+        mask_arr = mask.numpy()
+    else:
+        mask_arr = np.array(mask)
+    print(mask_arr.shape, np.unique(mask_arr))
+
+    subset = torch.utils.data.Subset(dataset, range(100))
+    all_masks: set[int] = set()
+    for _, mask in iter(subset):
+        all_masks = all_masks.union(np.unique(mask).tolist())
+    print("Unique", all_masks)
 
 
 if __name__ == "__main__":

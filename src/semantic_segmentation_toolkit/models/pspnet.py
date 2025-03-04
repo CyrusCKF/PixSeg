@@ -68,7 +68,7 @@ class PSPNET_ResNet50_Weights(SegWeightsEnum):
         "Trained on PASCAL VOC 2012 dataset",
     )
     CITYSCAPES_FINE = SegWeights(
-        "pspnet/pspnet_resnet50-cityscapes-512x1024-20250301.pth",
+        "pspnet/pspnet_resnet50-cityscapes-512x1024-20250304.pth",
         CITYSCAPES_LABELS,
         "Trained on Cityscapes (fine) dataset",
     )

@@ -8,22 +8,37 @@ from torchvision.transforms.v2 import Transform
 from .dataset_registry import DatasetMeta, register_dataset
 
 # fmt: off
-LIP_LABELS = ("Hat", "Hair", "Glove", "Sunglasses", "UpperClothes", "Dress", 
-              "Coat", "Socks", "Pants", "Jumpsuits", "Scarf", "Skirt", "Face", 
-              "Left-arm", "Right-arm", "Left-leg", "Right-leg", "Left-shoe", "Right-shoe")
+LIP_LABELS = (
+    "Background", "Hat", "Hair", "Glove", "Sunglasses", "UpperClothes", 
+    "Dress", "Coat", "Socks", "Pants", "Jumpsuits", "Scarf", "Skirt", 
+    "Face", "Left-arm", "Right-arm", "Left-leg", "Right-leg", "Left-shoe", 
+    "Right-shoe"
+)
 # fmt: on
 
 
 @register_dataset(
     {"split": "train"},
     {"split": "val"},
-    meta=DatasetMeta.default(19, ignore_index=255, labels=LIP_LABELS),
+    meta=DatasetMeta.default(20, ignore_index=255, labels=LIP_LABELS),
 )
 class LIP(Dataset):
     """[Look into person](https://sysu-hcp.net/lip/) Dataset
 
     Extract every sub zip in the same folder. Final structure should look like:
-    TODO LIP folder structure
+
+    ```
+    LIP
+    |-  TrainVal_images
+        |-  TrainVal_images
+            |-  train_images
+            |-  val_images
+    |-  TrainVal_parsing_annotations
+        |-  TrainVal_parsing_annotations
+            |-  TrainVal_parsing_annotations
+                |-  train_segmentations
+                |-  segmentations
+    ```
     """
 
     def __init__(
