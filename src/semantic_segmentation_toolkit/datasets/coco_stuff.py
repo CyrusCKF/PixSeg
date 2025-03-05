@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any, Literal
 
+import torch
 from torch.utils.data import Dataset
 from torchvision.io import ImageReadMode, decode_image
 from torchvision.transforms.v2 import Transform
@@ -8,8 +9,8 @@ from torchvision.transforms.v2 import Transform
 from .dataset_registry import DatasetMeta, register_dataset
 
 # fmt: off
-COCO_STUFF_LABELS = (
-    "unlabeled", "person", "bicycle", "car", "motorcycle", "airplane", "bus", 
+COCO_FULL_LABELS = (
+    "person", "bicycle", "car", "motorcycle", "airplane", "bus", 
     "train", "truck", "boat", "traffic light", "fire hydrant", "street sign", 
     "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", 
     "cow", "elephant", "bear", "zebra", "giraffe", "hat", "backpack", "umbrella", 
@@ -35,15 +36,30 @@ COCO_STUFF_LABELS = (
     "stairs", "stone", "straw", "structural-other", "table", "tent", "textile-other", 
     "towel", "tree", "vegetable", "wall-brick", "wall-concrete", "wall-other", 
     "wall-panel", "wall-stone", "wall-tile", "wall-wood", "water-other", "waterdrops", 
-    "window-blind", "window-other", "wood", 
+    "window-blind", "window-other", "wood"
 )
+"""Index of COCO_FULL_LABELS"""
 # fmt: on
+_COCO_REMOVED_IDS = (11, 25, 28, 29, 44, 65, 67, 68, 70, 82, 90)
+_COCO_KEPT_IDS = tuple(
+    [i for i in range(len(COCO_FULL_LABELS)) if i not in _COCO_REMOVED_IDS]
+)
+COCO_STUFF_LABELS = tuple([COCO_FULL_LABELS[i] for i in _COCO_KEPT_IDS] + ["unlabeled"])
+_VOC_IDS = (0, 1, 2, 4, 5, 6, 8, 15, 16, 17, 18, 19, 20, 43, 61, 62, 63, 66, 71)
+COCO_VOC_LABELS = tuple([COCO_FULL_LABELS[i] for i in _VOC_IDS] + ["unlabeled"])
 
 
 @register_dataset(
-    {},
-    {},
-    meta=DatasetMeta.default(num_classes=183, labels=COCO_STUFF_LABELS),
+    {"split": "train", "include_ids": _VOC_IDS, "extra_id": 19},
+    {"split": "val", "include_ids": _VOC_IDS, "extra_id": 19},
+    meta=DatasetMeta.default(num_classes=20, labels=COCO_VOC_LABELS),
+    name="coco[voc]",
+)
+@register_dataset(
+    {"split": "train", "include_ids": _COCO_KEPT_IDS, "extra_id": 171},
+    {"split": "val", "include_ids": _COCO_KEPT_IDS, "extra_id": 171},
+    meta=DatasetMeta.default(num_classes=172, labels=COCO_STUFF_LABELS),
+    name="coco",
 )
 class COCOStuff(Dataset):
     """[COCO-stuff](https://github.com/nightrome/cocostuff) Dataset
@@ -67,12 +83,43 @@ class COCOStuff(Dataset):
         root: Path | str,
         split: Literal["train", "val", "test"],
         transforms: Transform | None = None,
+        include_ids: list[int] | None = None,
+        extra_id: int = 255,
     ) -> None:
+        """
+        Args:
+            include_ids: List of ids to include in mask
+            extra_id: Id to assign the remaining indices to
+        """
         self.transforms = transforms
-        raise NotImplementedError()
+        self.include_ids = include_ids
+        self.extra_id = extra_id
+
+        root_path = Path(root)
+        image_folder = root_path / f"images/{split}2017"
+        self.image_files = list(image_folder.glob("*.jpg"))
+        if split == "test":
+            self.target_files = None
+            return
+
+        target_folder = root_path / f"annotations/{split}2017"
+        self.target_files = list(target_folder.glob("*.png"))
 
     def __len__(self):
-        raise NotImplementedError()
+        return len(self.image_files)
 
     def __getitem__(self, index) -> Any:
-        raise NotImplementedError()
+        image = decode_image(self.image_files[index], ImageReadMode.RGB)
+        if self.target_files is None:
+            target = None
+        else:
+            full_target = decode_image(self.target_files[index])
+            if self.include_ids is None:
+                target = full_target
+            else:
+                target = torch.full_like(full_target, self.extra_id)
+                for i, id_ in enumerate(self.include_ids):
+                    target[full_target == id_] = i
+        if self.transforms is not None:
+            image, target = self.transforms(image, target)
+        return image, target

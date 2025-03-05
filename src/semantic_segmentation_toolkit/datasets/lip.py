@@ -33,6 +33,9 @@ class LIP(Dataset):
         |-  TrainVal_images
             |-  train_images
             |-  val_images
+    |-  Testing_images
+        |-  Testing_images
+            |-  testing_images
     |-  TrainVal_parsing_annotations
         |-  TrainVal_parsing_annotations
             |-  TrainVal_parsing_annotations
@@ -44,12 +47,17 @@ class LIP(Dataset):
     def __init__(
         self,
         root: Path | str,
-        split: Literal["train", "val"],
+        split: Literal["train", "val", "testing"],
         transforms: Transform | None = None,
     ) -> None:
         self.transforms = transforms
 
         root_path = Path(root)
+        if split == "testing":
+            image_folder = root_path / rf"Testing_images\Testing_images\{split}_images"
+            self.image_files = list(image_folder.glob("*.jpg"))
+            self.target_files = None
+
         image_folder = root_path / rf"TrainVal_images\TrainVal_images\{split}_images"
         self.image_files = list(image_folder.glob("*.jpg"))
         target_folder = (
@@ -64,7 +72,10 @@ class LIP(Dataset):
 
     def __getitem__(self, index) -> Any:
         image = decode_image(self.image_files[index], ImageReadMode.RGB)
-        target = decode_image(self.target_files[index])
+        if self.target_files is None:
+            target = None
+        else:
+            target = decode_image(self.target_files[index])
         if self.transforms is not None:
             image, target = self.transforms(image, target)
         return image, target

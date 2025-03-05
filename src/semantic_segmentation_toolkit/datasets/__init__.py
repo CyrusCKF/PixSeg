@@ -10,7 +10,7 @@ from .cityscapes import (
     CityscapesCategory,
     CityscapesClass,
 )
-from .coco_stuff import COCO_STUFF_LABELS, COCOStuff
+from .coco_stuff import COCO_FULL_LABELS, COCO_STUFF_LABELS, COCO_VOC_LABELS, COCOStuff
 from .dataset_registry import (
     DATASET_METADATA,
     DATASET_ZOO,

@@ -198,7 +198,7 @@ class Upscale(nn.Sequential):
 
 class BiSeNet_ResNet18_Weights(SegWeightsEnum):
     CITYSCAPES_FINE = SegWeights(
-        "bisenet/bisenet_resnet18-cityscapes-512x1024-20250304.pth",
+        "bisenet/bisenet_resnet18-cityscapes-512x1024-20250305.pth",
         CITYSCAPES_LABELS,
         "Trained on Cityscapes (fine) dataset",
     )

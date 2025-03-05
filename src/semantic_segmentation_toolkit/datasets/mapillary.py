@@ -126,7 +126,7 @@ class MapillaryVistas(Dataset):
             full_target = decode_image(self.target_files[index])
             target = torch.full_like(full_target, 255)
             for i, id_ in enumerate(_MAPILLARY_TRAIN_IDS):
-                target[target == id_] = i
+                target[full_target == id_] = i
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)

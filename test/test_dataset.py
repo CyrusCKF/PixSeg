@@ -76,13 +76,12 @@ def _main():
     from PIL import Image
     from torch.utils.data import Dataset
     from torchvision import datasets
+    from tqdm import tqdm
 
     pprint(DATASET_ZOO, width=150, compact=True)
     pprint(DATASET_METADATA, width=150, compact=True)
 
-    dataset: Dataset = ADE20K(
-        root=r"D:\_Dataset\ADEChallengeData2016", split="validation"
-    )
+    dataset: Dataset = COCOStuff(root=r"D:\_Dataset\coco", split="train")
     data: tuple[Image.Image | Tensor, Image.Image | Tensor] = dataset[1]
     _, mask = data
     if isinstance(mask, Tensor):
@@ -93,9 +92,9 @@ def _main():
 
     subset = torch.utils.data.Subset(dataset, range(100))
     all_masks: set[int] = set()
-    for _, mask in iter(subset):
+    for _, mask in tqdm(iter(subset), total=len(subset)):
         all_masks = all_masks.union(np.unique(mask).tolist())
-    print("Unique", all_masks)
+    print("Unique", len(all_masks), all_masks)
 
 
 if __name__ == "__main__":

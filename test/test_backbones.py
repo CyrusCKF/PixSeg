@@ -22,7 +22,7 @@ parameters = [
     (VGGBackbone, vgg13, lambda x: x.layer_channels()),
     (VGGBackbone, vgg16, lambda x: x.layer_channels()),
     (VGGBackbone, vgg19, lambda x: x.layer_channels()),
-    (XceptionBackbone, xception_original, lambda x: x.layer_channels),
+    (XceptionBackbone, xception_original, lambda x: x.layer_channels()),
 ]
 
 
