@@ -16,7 +16,7 @@ There **3 ways** to start using this project
 
 ### *Option 1* With `torch.hub`
 
-This allows you to use model and pretrained weights **without installation** (you still need pytorch). See [*here*](#models) for all models and their weights.
+This allows you to use model and pretrained weights **without installation** (you still need PyTorch). See [*here*](#models) for all models and their weights.
 
 ```python
 import torch
@@ -28,7 +28,7 @@ model = torch.hub.load(
 )
 ```
 
-Refer to <https://pytorch.org/docs/main/hub.html> for more usage
+Refer to <https://pytorch.org/docs/main/hub.html> for more usage. As this project shares the same interface as TorchVision, you may also refer to this section [Using models from Hub](https://pytorch.org/vision/main/models.html#using-models-from-hub) on how to use vision models via PyTorch Hub.
 
 ### *Option 2* Import as package
 
@@ -115,24 +115,11 @@ for i in range(num_epochs):
 
 ### More on usage
 
+For general information about using models and pretrained weights, you may refere to <https://pytorch.org/vision/main/models.html#general-information-on-pre-trained-weights>, which shares the same interface. This section [Using models from Hub](https://pytorch.org/vision/main/models.html#using-models-from-hub) shows how to use models via PyTorch Hub.
+
 You may refer to [tasks/minimal_training.ipynb](tasks/minimal_training.ipynb) to see how to implement a simple training and evaluation loop. Pretrained weights and their training details can be found in the [*Release*](https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases) side bar. All of them are also exposed through enums in code.
 
 If you installed the **full** version or cloned this project, you can go to [tasks/training.ipynb](tasks/training.ipynb) to see how to start training with config and loggers. You may check [doc/config_doc.ipynb](doc/config_doc.ipynb) to customize the config. In [tasks/inference.ipynb](tasks/inference.ipynb) also demonstrates a lot of functions to improve performance in test time
-
-## Training outputs
-
-In the **\[full\]** version, trainer can record results locally or to various service providers. This demonstrates the default bahaviour of each loggers. You may also implement your own.
-
-### Local
-
-- Logs
-- Checkpoints and models
-- Confusion matrix
-- Snapshots
-
-### WandB
-
-### Tensorboard
 
 ## Features
 
@@ -212,6 +199,21 @@ See [doc\config_doc.ipynb](doc\config_doc.ipynb) for explanation of each field.
 Test-time augmentations and sliding window inference. Others don't really do much
 
 \* Only available in the full version
+
+## Training outputs
+
+In the **\[full\]** version, trainer can record results locally or to various service providers. This previews the bahaviour of each logger. You may also implement your own.
+
+### Local
+
+- Logs
+- Checkpoints and models
+- Confusion matrix
+- Snapshots
+
+### WandB
+
+### Tensorboard
 
 ## Plans
 

@@ -80,3 +80,6 @@ def register_model(
         return func
 
     return wrapper
+
+
+# TODO support APIs on https://pytorch.org/vision/main/models.html

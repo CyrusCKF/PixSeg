@@ -47,6 +47,7 @@ dev = [
     "pytest-cov>=6.0.0",
     "build>=1.2.2",
     "twine>=6.1.0",
+    "h5py>=3.13.0",
 ]
 
 [project.urls]

@@ -1,4 +1,5 @@
 /dataset/
+/assets/
 
 *.zip
 *.toml
