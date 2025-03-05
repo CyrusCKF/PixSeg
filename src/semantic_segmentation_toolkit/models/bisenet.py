@@ -8,40 +8,17 @@ from torchvision.models.resnet import (
     resnet18,
     resnet50,
 )
-from torchvision.models.segmentation.fcn import FCNHead
 
 from ..datasets import CITYSCAPES_LABELS
-from .backbones import ResNetBackbone, replace_layer_name
+from .backbones import (
+    ResNetBackbone,
+    Xception_Weights,
+    XceptionBackbone,
+    replace_layer_name,
+    xception_original,
+)
 from .model_registry import SegWeights, SegWeightsEnum, register_model
 from .model_utils import _validate_weights_input
-
-
-class _ConvNormAct(nn.Sequential):
-    def __init__(
-        self, in_channels: int, out_channels: int, kernel_size: int, stride: int = 1
-    ):
-        super().__init__(
-            nn.Conv2d(
-                in_channels,
-                out_channels,
-                kernel_size,
-                padding=kernel_size // 2,
-                stride=stride,
-                bias=False,
-            ),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-        )
-
-
-class _Upscale(nn.Sequential):
-    """interpolate tensors while keeping the same number of channels"""
-
-    def __init__(self, in_channels: int, out_channels: int, factor=2):
-        super().__init__(
-            nn.Conv2d(in_channels, out_channels * factor * factor, 1),
-            nn.PixelShuffle(factor),
-        )
 
 
 class BiSeNet(nn.Module):
@@ -109,8 +86,8 @@ class BiSeNetHead(nn.Sequential):
         self, in_channels: int, inter_channels: int, out_channels: int, up_factor: int
     ):
         super().__init__(
-            _ConvNormAct(in_channels, inter_channels, 3),
-            _Upscale(inter_channels, out_channels, up_factor),
+            ConvNormAct(in_channels, inter_channels, 3),
+            Upscale(inter_channels, out_channels, up_factor),
         )
 
 
@@ -121,9 +98,9 @@ class ContextPathStage(nn.Module):
         self.global_pool = nn.AdaptiveAvgPool2d(1)
         self.arm_16x = AttentionRefinementModule(feature_channels["16x"], out_channels)
         self.arm_32x = AttentionRefinementModule(feature_channels["32x"], out_channels)
-        self.conv_16x = _ConvNormAct(out_channels, out_channels, 3)
-        self.conv_32x = _ConvNormAct(out_channels, out_channels, 3)
-        self.conv_global = _ConvNormAct(feature_channels["32x"], out_channels, 1)
+        self.conv_16x = ConvNormAct(out_channels, out_channels, 3)
+        self.conv_32x = ConvNormAct(out_channels, out_channels, 3)
+        self.conv_global = ConvNormAct(feature_channels["32x"], out_channels, 1)
 
     def forward(self, feature_maps: dict[str, Tensor], output_size: list[int]):
         """feature_maps must contain keys "16x" and "32x"""
@@ -147,17 +124,17 @@ class SpatialPath(nn.Sequential):
     def __init__(self, in_channels: int, out_channels: int) -> None:
         inter_channels = out_channels // 2
         super().__init__(
-            _ConvNormAct(in_channels, inter_channels, 7, 2),
-            _ConvNormAct(inter_channels, inter_channels, 3, 2),
-            _ConvNormAct(inter_channels, inter_channels, 3, 2),
-            _ConvNormAct(inter_channels, out_channels, 1, 1),
+            ConvNormAct(in_channels, inter_channels, 7, 2),
+            ConvNormAct(inter_channels, inter_channels, 3, 2),
+            ConvNormAct(inter_channels, inter_channels, 3, 2),
+            ConvNormAct(inter_channels, out_channels, 1, 1),
         )
 
 
 class AttentionRefinementModule(nn.Module):
     def __init__(self, in_channels: int, out_channels: int) -> None:
         super().__init__()
-        self.conv = _ConvNormAct(in_channels, out_channels, 3, 1)
+        self.conv = ConvNormAct(in_channels, out_channels, 3, 1)
         self.attention = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
             nn.Conv2d(out_channels, out_channels, 1, bias=False),
@@ -175,7 +152,7 @@ class AttentionRefinementModule(nn.Module):
 class FeatureFusionModule(nn.Module):
     def __init__(self, in_channels: int, out_channels: int) -> None:
         super().__init__()
-        self.conv = _ConvNormAct(in_channels, out_channels, 1)
+        self.conv = ConvNormAct(in_channels, out_channels, 1)
         self.attention = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
             nn.Conv2d(out_channels, out_channels // 4, 1, bias=True),
@@ -189,6 +166,34 @@ class FeatureFusionModule(nn.Module):
         weight = self.attention(features)
         out = features + features * weight
         return out
+
+
+class ConvNormAct(nn.Sequential):
+    def __init__(
+        self, in_channels: int, out_channels: int, kernel_size: int, stride: int = 1
+    ):
+        super().__init__(
+            nn.Conv2d(
+                in_channels,
+                out_channels,
+                kernel_size,
+                padding=kernel_size // 2,
+                stride=stride,
+                bias=False,
+            ),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+        )
+
+
+class Upscale(nn.Sequential):
+    """interpolate tensors while keeping the same number of channels"""
+
+    def __init__(self, in_channels: int, out_channels: int, factor=2):
+        super().__init__(
+            nn.Conv2d(in_channels, out_channels * factor * factor, 1),
+            nn.PixelShuffle(factor),
+        )
 
 
 class BiSeNet_ResNet18_Weights(SegWeightsEnum):
@@ -246,6 +251,34 @@ def bisenet_resnet50(
         replace_stride_with_dilation=[False, True, True],
     )
     backbone = ResNetBackbone(backbone_model)
+    replace_layer_name(backbone, {-2: "16x", -1: "32x"})
+
+    channels = backbone.layer_channels()
+    model = BiSeNet(num_classes, backbone, channels, use_aux=aux_loss)
+    return model
+
+
+@register_model()
+def bisenet_xception(
+    num_classes: int | None = None,
+    weights: str | None = None,
+    progress: bool = True,
+    aux_loss: bool = False,
+    weights_backbone: Xception_Weights | str | None = Xception_Weights.DEFAULT,
+) -> nn.Module:
+    """Using the original Xception as backbone
+
+    The BiSeNet paper suggested using xception39 as backbone, but I can't seem
+    to find its definition?
+    """
+    if weights is not None:
+        raise NotImplementedError("Weights is not supported yet")
+    _, weights_backbone, num_classes = _validate_weights_input(
+        None, weights_backbone, num_classes
+    )
+
+    backbone_model = xception_original(weights=weights_backbone, progress=progress)
+    backbone = XceptionBackbone(backbone_model)
     replace_layer_name(backbone, {-2: "16x", -1: "32x"})
 
     channels = backbone.layer_channels()

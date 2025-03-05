@@ -3,6 +3,7 @@ from .bisenet import (
     BiSeNet_ResNet18_Weights,
     bisenet_resnet18,
     bisenet_resnet50,
+    bisenet_xception,
 )
 from .deeplabv3 import deeplabv3_resnet34
 from .enet import ENet, enet_original
@@ -17,3 +18,5 @@ from .model_registry import (
 )
 from .pspnet import PSPNet, PSPNET_ResNet50_Weights, pspnet_resnet50
 from .sfnet import SFNet, sfnet_resnet18
+
+# TODO generate docstring

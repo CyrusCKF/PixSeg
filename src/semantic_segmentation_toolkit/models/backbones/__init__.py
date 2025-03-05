@@ -10,5 +10,6 @@ from .backbone_utils import replace_layer_name
 from .mobilenet_v3 import MobileNetV3Backbone
 from .resnet import ResNetBackbone
 from .vgg import VGGBackbone
+from .xception import Xception, Xception_Weights, XceptionBackbone, xception_original
 
-# TODO xception backbone for encnet and bisenet
+# TODO move backbone outside models

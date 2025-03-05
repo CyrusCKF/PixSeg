@@ -22,6 +22,7 @@ parameters = [
     (VGGBackbone, vgg13, lambda x: x.layer_channels()),
     (VGGBackbone, vgg16, lambda x: x.layer_channels()),
     (VGGBackbone, vgg19, lambda x: x.layer_channels()),
+    (XceptionBackbone, xception_original, lambda x: x.layer_channels),
 ]
 
 
@@ -44,8 +45,8 @@ def _main():
     from torchinfo import summary
 
     fake_input = torch.rand([4, 3, 224, 224])
-    model = vgg16()
-    backbone = VGGBackbone(model)
+    model = xception_original()
+    backbone = XceptionBackbone(model)
     print(backbone)
 
     summary(backbone, input_data=fake_input)
