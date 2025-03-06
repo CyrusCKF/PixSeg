@@ -44,6 +44,14 @@ class ResidualBlock(nn.Module):
         super().__init__()
         self.num_channels = num_channels
 
+        # define residual path first, so that converting weights is less trickier
+        self.residual_branch = nn.Identity()
+        if residual_conv:
+            self.residual_branch = nn.Sequential(
+                nn.Conv2d(num_channels[0], num_channels[-1], 1, stride=2, bias=False),
+                nn.BatchNorm2d(num_channels[-1]),
+            )
+
         main_branch = []
         for in_channels, out_channels in zip(num_channels[:-1], num_channels[1:]):
             main_branch += [
@@ -56,13 +64,6 @@ class ResidualBlock(nn.Module):
         if pool_at_end:
             main_branch.append(nn.MaxPool2d(3, stride=2, padding=1))
         self.main_branch = nn.Sequential(*main_branch)
-
-        self.residual_branch = nn.Identity()
-        if residual_conv:
-            self.residual_branch = nn.Sequential(
-                nn.Conv2d(num_channels[0], num_channels[-1], 1, stride=2),
-                nn.BatchNorm2d(num_channels[-1]),
-            )
 
     def forward(self, x: Tensor):
         main_out = self.main_branch(x)
@@ -79,6 +80,7 @@ class Xception(nn.Module):
         self.entry_flow = nn.Sequential(
             nn.Conv2d(3, 32, 3, padding=1, stride=2, bias=False),
             nn.BatchNorm2d(32),
+            nn.ReLU(),
             nn.Conv2d(32, 64, 3, padding=1, bias=False),
             nn.BatchNorm2d(64),
             nn.ReLU(),
@@ -152,13 +154,13 @@ class XceptionBackbone(IntermediateLayerGetter):
         """Extract each spatial layers before the next pooling happens"""
         layer_and_channels: dict[str, tuple[nn.Module, int]] = {
             "layer1": (
-                nn.Sequential(*model.entry_flow[:5]),
-                model.entry_flow[3].num_features,
+                nn.Sequential(*model.entry_flow[:6]),
+                model.entry_flow[4].num_features,
             ),
-            "layer2": (model.entry_flow[5], model.entry_flow[5].num_channels[-1]),  # type: ignore
-            "layer3": (model.entry_flow[6], model.entry_flow[6].num_channels[-1]),  # type: ignore
+            "layer2": (model.entry_flow[6], model.entry_flow[6].num_channels[-1]),  # type: ignore
+            "layer3": (model.entry_flow[7], model.entry_flow[7].num_channels[-1]),  # type: ignore
             "layer4": (
-                nn.Sequential(model.entry_flow[7], *model.middle_flow),
+                nn.Sequential(model.entry_flow[8], *model.middle_flow),
                 model.middle_flow[-1].num_channels[-1],  # type: ignore
             ),
             "layer5": (

@@ -3,7 +3,7 @@ from torch import Tensor, nn
 from torch.hub import load_state_dict_from_url
 from torch.nn import functional as F
 
-# from ..datasets import CITYSCAPES_LABELS, VOC_LABELS
+from ..datasets import CITYSCAPES_LABELS
 from .model_registry import SegWeights, SegWeightsEnum, register_model
 from .model_utils import _validate_weights_input
 
@@ -15,81 +15,6 @@ def _pad_to_even_size(x: Tensor, value):
         to_pad = [0, 0] if size % 2 == 0 else [0, 1]
         pad_size.extend(to_pad)
     return F.pad(x, pad_size, value=value)
-
-
-class ENet(nn.Module):
-    """Implement ENet from [ENet: A Deep Neural Network Architecture for
-    Real-Time Semantic Segmentation](https://arxiv.org/abs/1606.02147)"""
-
-    def __init__(self, num_classes: int) -> None:
-        super().__init__()
-
-        self.initial = ENetInitial(3, 16)
-
-        self.section1_down = ENetDownsampleBottleneck(16, 64)
-        self.section1_convs = nn.Sequential(
-            *[ENetRegularBottleneck(64, 64) for _ in range(4)]
-        )
-
-        self.section2_down = ENetDownsampleBottleneck(64, 128)
-        self.section2_convs = nn.Sequential(
-            ENetRegularBottleneck(128, 128),
-            ENetRegularBottleneck(128, 128, dilation=2),
-            ENetRegularBottleneck(128, 128, asymmetric=True),
-            ENetRegularBottleneck(128, 128, dilation=4),
-            ENetRegularBottleneck(128, 128),
-            ENetRegularBottleneck(128, 128, dilation=8),
-            ENetRegularBottleneck(128, 128, asymmetric=True),
-            ENetRegularBottleneck(128, 128, dilation=16),
-        )
-
-        self.section3_convs = nn.Sequential(
-            ENetRegularBottleneck(128, 128),
-            ENetRegularBottleneck(128, 128, dilation=2),
-            ENetRegularBottleneck(128, 128, asymmetric=True),
-            ENetRegularBottleneck(128, 128, dilation=4),
-            ENetRegularBottleneck(128, 128),
-            ENetRegularBottleneck(128, 128, dilation=8),
-            ENetRegularBottleneck(128, 128, asymmetric=True),
-            ENetRegularBottleneck(128, 128, dilation=16),
-        )
-
-        self.section4_up = ENetUpsampleBottleneck(128, 64)
-        self.section4_convs = nn.Sequential(
-            *[ENetRegularBottleneck(64, 64) for _ in range(2)]
-        )
-
-        self.section5_up = ENetUpsampleBottleneck(64, 16)
-        self.section5_convs = ENetRegularBottleneck(16, 16)
-
-        self.head = nn.ConvTranspose2d(
-            16, num_classes, 3, stride=2, padding=1, bias=False
-        )
-
-    def forward(self, x: Tensor) -> dict[str, Tensor]:
-        out: Tensor = x
-        input_size = out.shape
-        out = self.initial(out)
-
-        section1_size = out.shape
-        out, section1_indices = self.section1_down(out)
-        out = self.section1_convs(out)
-
-        section2_size = out.shape
-        out, section2_indices = self.section2_down(out)
-        out = self.section2_convs(out)
-
-        out = self.section3_convs(out)
-
-        out = self.section4_up(out, section2_indices, section2_size)
-        out = self.section4_convs(out)
-
-        out = self.section5_up(out, section1_indices, section1_size)
-        out = self.section5_convs(out)
-
-        out = self.head(out, output_size=input_size)
-
-        return {"out": out}
 
 
 class ENetInitial(nn.Module):
@@ -220,16 +145,104 @@ class ENetRegularBottleneck(ENetBottleneck):
         return out
 
 
+class ENet(nn.Module):
+    """Implement ENet from [ENet: A Deep Neural Network Architecture for
+    Real-Time Semantic Segmentation](https://arxiv.org/abs/1606.02147)"""
+
+    def __init__(self, num_classes: int) -> None:
+        super().__init__()
+
+        self.initial = ENetInitial(3, 16)
+
+        self.section1_down = ENetDownsampleBottleneck(16, 64)
+        self.section1_convs = nn.Sequential(
+            *[ENetRegularBottleneck(64, 64) for _ in range(4)]
+        )
+
+        self.section2_down = ENetDownsampleBottleneck(64, 128)
+        self.section2_convs = nn.Sequential(
+            ENetRegularBottleneck(128, 128),
+            ENetRegularBottleneck(128, 128, dilation=2),
+            ENetRegularBottleneck(128, 128, asymmetric=True),
+            ENetRegularBottleneck(128, 128, dilation=4),
+            ENetRegularBottleneck(128, 128),
+            ENetRegularBottleneck(128, 128, dilation=8),
+            ENetRegularBottleneck(128, 128, asymmetric=True),
+            ENetRegularBottleneck(128, 128, dilation=16),
+        )
+
+        self.section3_convs = nn.Sequential(
+            ENetRegularBottleneck(128, 128),
+            ENetRegularBottleneck(128, 128, dilation=2),
+            ENetRegularBottleneck(128, 128, asymmetric=True),
+            ENetRegularBottleneck(128, 128, dilation=4),
+            ENetRegularBottleneck(128, 128),
+            ENetRegularBottleneck(128, 128, dilation=8),
+            ENetRegularBottleneck(128, 128, asymmetric=True),
+            ENetRegularBottleneck(128, 128, dilation=16),
+        )
+
+        self.section4_up = ENetUpsampleBottleneck(128, 64)
+        self.section4_convs = nn.Sequential(
+            *[ENetRegularBottleneck(64, 64) for _ in range(2)]
+        )
+
+        self.section5_up = ENetUpsampleBottleneck(64, 16)
+        self.section5_convs = ENetRegularBottleneck(16, 16)
+
+        self.head = nn.ConvTranspose2d(
+            16, num_classes, 3, stride=2, padding=1, bias=False
+        )
+
+    def forward(self, x: Tensor) -> dict[str, Tensor]:
+        out: Tensor = x
+        input_size = out.shape
+        out = self.initial(out)
+
+        section1_size = out.shape
+        out, section1_indices = self.section1_down(out)
+        out = self.section1_convs(out)
+
+        section2_size = out.shape
+        out, section2_indices = self.section2_down(out)
+        out = self.section2_convs(out)
+
+        out = self.section3_convs(out)
+
+        out = self.section4_up(out, section2_indices, section2_size)
+        out = self.section4_convs(out)
+
+        out = self.section5_up(out, section1_indices, section1_size)
+        out = self.section5_convs(out)
+
+        out = self.head(out, output_size=input_size)
+
+        return {"out": out}
+
+
+class ENet_Weights(SegWeightsEnum):
+    CITYSCAPES_FINE = SegWeights(
+        "enet/enet-cityscapes-512x1024-20250304.pth",
+        CITYSCAPES_LABELS,
+        "Trained on Cityscapes (fine) dataset",
+    )
+    DEFAULT = CITYSCAPES_FINE
+
+
 # not name it enet to prevent name clashing with module
-@register_model("enet")
+@register_model("enet", weights_enum=ENet_Weights)
 def enet_original(
     num_classes: int | None = None,
     weights: str | None = None,
     progress: bool = True,
 ):
-    if weights is not None:
-        raise NotImplementedError("Weights is not supported yet")
-    _, _, num_classes = _validate_weights_input(None, None, num_classes)
-
+    weights_model = ENet_Weights.resolve(weights)
+    weights_model, _, num_classes = _validate_weights_input(
+        weights_model, None, num_classes
+    )
     model = ENet(num_classes)
+
+    if weights_model is not None:
+        state_dict = load_state_dict_from_url(weights_model.url, progress=progress)
+        model.load_state_dict(state_dict)
     return model

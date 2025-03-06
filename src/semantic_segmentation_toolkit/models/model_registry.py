@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, ParamSpec, Sequence, TypeVar
-from urllib.parse import urljoin
 
 from torch import nn
 from torchvision.transforms.v2 import Transform
@@ -15,13 +14,13 @@ class SegWeights:
     labels: Sequence[str]
     description: str
     base_url: str = (
-        "https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/download"
+        "https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/download/"
     )
     transforms: Callable[..., Transform] = SegmentationTransform
 
     @property
     def url(self):
-        return urljoin(self.base_url, self.file_path)
+        return self.base_url + self.file_path
 
 
 class SegWeightsEnum(Enum):

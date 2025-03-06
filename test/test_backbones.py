@@ -46,6 +46,7 @@ def _main():
 
     fake_input = torch.rand([4, 3, 224, 224])
     model = xception_original()
+    print(model)
     backbone = XceptionBackbone(model)
     print(backbone)
 

@@ -47,15 +47,32 @@ def _main():
 
     from src.semantic_segmentation_toolkit.datasets import CITYSCAPES_LABELS, VOC_LABELS
 
-    model = bisenet_resnet18(num_classes=len(CITYSCAPES_LABELS))
-    model.eval()
-    print(model)
-    torchinfo.summary(model, [1, 3, 512, 1024])
+    # model = pspnet_resnet50(num_classes=len(CITYSCAPES_LABELS))
+    # model.eval()
+    # print(model)
+    # torchinfo.summary(model, [1, 3, 512, 1024])
+    # pprint(MODEL_ZOO.keys(), compact=True)
+    # for key, weights in MODEL_WEIGHTS.items():
+    #     print(key, [w.name for w in weights])
 
-    pprint(MODEL_ZOO.keys(), compact=True)
-    for key, weights in MODEL_WEIGHTS.items():
-        print(key, [w.name for w in weights])
+    sfnets = [
+        sfnet_resnet18(weights_backbone=None),
+        sfnet_resnet18(context_type="sppm"),
+        sfnet_resnet18(head_type="v2"),
+        sfnet_resnet18(head_type="v2", fa_type="spatial_atten"),
+    ]
+    for sfnet in sfnets:
+        fake_input = torch.rand([4, 3, 512, 512])
+        output = sfnet(fake_input)
+
+    fake_high, fake_low = torch.rand([4, 64, 16, 16]), torch.rand([4, 64, 32, 32])
+    fam = FlowAlignmentModule(64, 256)
+    fake_output = fam(fake_low, fake_high)
+    print(fake_output.shape)
 
 
 if __name__ == "__main__":
+    from src.semantic_segmentation_toolkit.models.pspnet import PyramidPoolingModule
+    from src.semantic_segmentation_toolkit.models.sfnet import *
+
     _main()
