@@ -57,13 +57,19 @@ def _main():
 
     sfnets = [
         sfnet_resnet18(weights_backbone=None),
-        sfnet_resnet18(context_type="sppm"),
-        sfnet_resnet18(head_type="v2"),
-        sfnet_resnet18(head_type="v2", fa_type="spatial_atten"),
+        sfnet_resnet101(),
+        sfnet_lite_resnet18(),
+        sfnet_lite_resnet101(fam_pooling=True),
     ]
     for sfnet in sfnets:
         fake_input = torch.rand([4, 3, 512, 512])
         output = sfnet(fake_input)
+        print("output", output["out"].shape)
+        torchinfo.summary(
+            sfnet,
+            input_data=fake_input,
+            col_names=("output_size", "num_params", "mult_adds"),
+        )
 
     fake_high, fake_low = torch.rand([4, 64, 16, 16]), torch.rand([4, 64, 32, 32])
     fam = FlowAlignmentModule(64, 256)
@@ -72,7 +78,7 @@ def _main():
 
 
 if __name__ == "__main__":
-    from src.semantic_segmentation_toolkit.models.pspnet import PyramidPoolingModule
     from src.semantic_segmentation_toolkit.models.sfnet import *
+    from src.semantic_segmentation_toolkit.models.sfnet_lite import *
 
     _main()

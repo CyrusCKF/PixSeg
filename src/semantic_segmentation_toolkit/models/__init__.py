@@ -17,6 +17,7 @@ from .model_registry import (
     register_model,
 )
 from .pspnet import PSPNet, PSPNET_ResNet50_Weights, pspnet_resnet50
-from .sfnet import SFNet, sfnet_resnet18
+from .sfnet import SFNet, sfnet_resnet18, sfnet_resnet101
+from .sfnet_lite import SFNetLite, sfnet_lite_resnet18, sfnet_lite_resnet101
 
 # TODO generate docstring
