@@ -65,12 +65,13 @@ def flow_warp(x: Tensor, flow_field: Tensor) -> Tensor:
     # make normalized coordinate grid
     fh_space = torch.linspace(-1.0, 1.0, FH)
     fw_space = torch.linspace(-1.0, 1.0, FW)
-    coord_grid = pair_grid(fh_space, fw_space)
+    coord_grid = pair_grid(fh_space, fw_space).to(x.device)
 
-    norm_field = flow_field.permute(0, 2, 3, 1) / torch.tensor([FW, FH])
+    field_size = torch.tensor([FW, FH], device=flow_field.device)
+    norm_field = flow_field.permute(0, 2, 3, 1) / field_size
     coord_grid = coord_grid + norm_field
     output = F.grid_sample(x, coord_grid, align_corners=True)
-    return output
+    return output.to(x.dtype)
 
 
 class FlowAlignmentModule(nn.Module):

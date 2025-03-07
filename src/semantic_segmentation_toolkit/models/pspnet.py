@@ -60,7 +60,7 @@ class PyramidPoolingModule(nn.Module):
             ),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            nn.Dropout(dropout, inplace=True),
+            nn.Dropout(dropout),
         )
 
     def forward(self, x: Tensor) -> Tensor:
