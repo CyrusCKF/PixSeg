@@ -1,5 +1,3 @@
-from typing import Literal
-
 import torch
 from torch import Tensor, nn
 from torch.hub import load_state_dict_from_url
@@ -12,7 +10,7 @@ from torchvision.models.resnet import (
 )
 
 from ..datasets import CITYSCAPES_LABELS
-from .backbones import ResNetBackbone, replace_layer_name
+from .backbones import ResNetBackbone
 from .model_registry import SegWeights, SegWeightsEnum, register_model
 from .model_utils import _validate_weights_input
 from .sfnet import ConvNormAct, SFNet, flow_warp

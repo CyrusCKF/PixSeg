@@ -1,4 +1,7 @@
-from typing import Literal, Sequence
+"""Implementation of SFNet
+
+Since this use the FPN architecture, the implementation is very similar to UPerNet
+"""
 
 import torch
 from torch import Tensor, nn
@@ -12,9 +15,10 @@ from torchvision.models.resnet import (
 )
 
 from ..datasets import CITYSCAPES_LABELS
-from .backbones import ResNetBackbone, replace_layer_name
+from .backbones import ResNetBackbone
 from .model_registry import SegWeights, SegWeightsEnum, register_model
 from .model_utils import _validate_weights_input
+from .pspnet import PyramidPoolingModule
 
 
 class ConvNormAct(nn.Sequential):
@@ -33,47 +37,6 @@ class ConvNormAct(nn.Sequential):
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
         )
-
-
-#####
-# region Context
-#####
-
-
-class ContextPPM(nn.Module):
-    """Similar to pyramid pooling module, but with minor differences"""
-
-    def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        pooling_sizes: Sequence[int] = (1, 2, 3, 6),
-        bottleneck_kernel_size=3,
-    ):
-        super().__init__()
-        self.poolings = nn.ModuleList()
-        for size in pooling_sizes:
-            self.poolings.append(
-                nn.Sequential(
-                    nn.AdaptiveAvgPool2d(size),
-                    ConvNormAct(in_channels, out_channels, 1),
-                )
-            )
-
-        bottlenect_in = in_channels + len(pooling_sizes) * out_channels
-        self.bottleneck = nn.Sequential(
-            ConvNormAct(bottlenect_in, out_channels, bottleneck_kernel_size),
-            nn.Dropout2d(0.1),
-        )
-
-    def forward(self, x: Tensor) -> Tensor:
-        pools: list[Tensor] = []
-        for pooling in self.poolings:
-            pool = pooling(x)
-            pools.append(F.interpolate(pool, x.shape[2:], mode="bilinear"))
-
-        feature_cat = torch.cat([x] + pools, dim=1)
-        return self.bottleneck(feature_cat)
 
 
 #####
@@ -146,7 +109,7 @@ class SFNetHead(nn.Module):
         self,
         out_channels: int,
         feature_channels: dict[str, int],
-        fpn_channels=256,
+        fpn_channels: int,
         enable_dsn=False,
     ):
         super().__init__()
@@ -234,7 +197,13 @@ class SFNet(nn.Module):
         self.backbone = backbone
 
         in_channels = list(backbone_channels.values())[-1]
-        self.neck = ContextPPM(in_channels, fpn_channels)
+        self.neck = PyramidPoolingModule(
+            in_channels,
+            fpn_channels,
+            (1, 2, 3, 6),
+            pool_channels=fpn_channels,
+            dropout=0.1,
+        )
 
         self.head = SFNetHead(
             num_classes,

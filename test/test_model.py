@@ -55,30 +55,19 @@ def _main():
     # for key, weights in MODEL_WEIGHTS.items():
     #     print(key, [w.name for w in weights])
 
-    sfnets = [
-        sfnet_resnet18(weights_backbone=None),
-        sfnet_resnet101(),
-        sfnet_lite_resnet18(),
-        sfnet_lite_resnet101(fam_pooling=True),
-    ]
-    for sfnet in sfnets:
+    nets = [upernet_resnet18(num_classes=10), upernet_resnet101(num_classes=10)]
+    for net in nets:
         fake_input = torch.rand([4, 3, 512, 512])
-        output = sfnet(fake_input)
+        output = net(fake_input)
         print("output", output["out"].shape)
         torchinfo.summary(
-            sfnet,
+            net,
             input_data=fake_input,
             col_names=("output_size", "num_params", "mult_adds"),
         )
 
-    fake_high, fake_low = torch.rand([4, 64, 16, 16]), torch.rand([4, 64, 32, 32])
-    fam = FlowAlignmentModule(64, 256)
-    fake_output = fam(fake_low, fake_high)
-    print(fake_output.shape)
-
 
 if __name__ == "__main__":
-    from src.semantic_segmentation_toolkit.models.sfnet import *
-    from src.semantic_segmentation_toolkit.models.sfnet_lite import *
+    from src.semantic_segmentation_toolkit.models.upernet import *
 
     _main()

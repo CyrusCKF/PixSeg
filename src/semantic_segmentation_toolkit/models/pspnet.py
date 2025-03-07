@@ -15,30 +15,52 @@ from .model_utils import _validate_weights_input
 
 
 class PyramidPoolingModule(nn.Module):
+    """Effectively captures global context
+
+    This module is intended to be generic and reusable
+    """
+
     def __init__(
         self,
         in_channels: int,
         out_channels: int,
-        pooling_sizes: Sequence[int] = (1, 2, 3, 6),
+        pooling_sizes: Sequence[int],
+        pool_channels: int | None = None,
+        dropout: float = 0,
+        bottleneck_kernel_size=1,
     ) -> None:
+        """
+        Args:
+            pool_channels: Number of output channels in pooling layer. Default is
+                `in_channels // len(pooling_sizes)`
+            dropout: Dropout ratio at the end of bottleneck
+        """
         super().__init__()
         self.poolings = nn.ModuleList()
-        pool_channels = in_channels // len(pooling_sizes)
+        if pool_channels is None:
+            pool_channels = in_channels // len(pooling_sizes)
 
         for size in pooling_sizes:
             mods = [
                 nn.AdaptiveAvgPool2d(size),
                 nn.Conv2d(in_channels, pool_channels, 1, bias=False),
                 nn.BatchNorm2d(pool_channels),
-                nn.ReLU(),
+                nn.ReLU(inplace=True),
             ]
             self.poolings.append(nn.Sequential(*mods))
 
         pyramid_channels = in_channels + pool_channels * len(pooling_sizes)
         self.bottleneck = nn.Sequential(
-            nn.Conv2d(pyramid_channels, out_channels, 1, bias=False),
+            nn.Conv2d(
+                pyramid_channels,
+                out_channels,
+                bottleneck_kernel_size,
+                padding=bottleneck_kernel_size // 2,
+                bias=False,
+            ),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
+            nn.Dropout(dropout, inplace=True),
         )
 
     def forward(self, x: Tensor) -> Tensor:
@@ -48,8 +70,7 @@ class PyramidPoolingModule(nn.Module):
             pools.append(F.interpolate(pool, x.shape[2:], mode="bilinear"))
 
         out = torch.cat([x, *pools], dim=1)
-        out = self.bottleneck(out)
-        return out
+        return self.bottleneck(out)
 
 
 class PSPHead(nn.Sequential):
