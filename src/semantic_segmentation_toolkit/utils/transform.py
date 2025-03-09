@@ -96,6 +96,7 @@ class SegmentationTransform(v2.Compose):
             v2.ToDtype(torch.long),
             lambda mask: torch.squeeze(mask, 0),
         ]
+        # TODO may pad if necessary (>2x the size)
         if size is not None:
             image_transforms.insert(
                 0, v2.RandomCrop(size, pad_if_needed=True, padding_mode="reflect")

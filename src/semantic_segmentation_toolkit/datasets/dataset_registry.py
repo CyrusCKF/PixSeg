@@ -30,7 +30,7 @@ class DatasetMeta:
     @staticmethod
     def default(
         num_classes: int,
-        ignore_index=-100,
+        ignore_index=255,
         labels: Sequence[str] | None = None,
         colors: Sequence[tuple[int, int, int]] | None = None,
     ) -> "DatasetMeta":

@@ -36,24 +36,33 @@ _CITYSCAPES_CATEGORY_IDS:dict[str, tuple[int, ...]] = { # this is not frozen, so
 }
 
 # fmt: on
-CITYSCAPES_LABELS = tuple([CITYSCAPES_FULL_LABELS[i] for i in _CITYSCAPES_TRAIN_IDS])
-CITYSCAPES_COLORS = tuple([CITYSCAPES_FULL_COLORS[i] for i in _CITYSCAPES_TRAIN_IDS])
-CITYSCAPES_CATEGORY_LABELS = tuple(list(_CITYSCAPES_CATEGORY_IDS.keys()))
+# Inlcude background classes
+CITYSCAPES_LABELS = tuple(
+    [CITYSCAPES_FULL_LABELS[i] for i in _CITYSCAPES_TRAIN_IDS] + ["background"]
+)
+CITYSCAPES_COLORS = tuple(
+    [CITYSCAPES_FULL_COLORS[i] for i in _CITYSCAPES_TRAIN_IDS] + [(0, 0, 0)]
+)
+CITYSCAPES_CATEGORY_LABELS = tuple(
+    list(_CITYSCAPES_CATEGORY_IDS.keys()) + ["background"]
+)
 CITYSCAPES_CATEGORY_COLORS = tuple(
     [CITYSCAPES_FULL_COLORS[ids[0]] for ids in _CITYSCAPES_CATEGORY_IDS.values()]
+    + [(0, 0, 0)]
 )
 
 
 @register_dataset(
-    {"target_type": "semantic", "split": "train"},
-    {"target_type": "semantic", "split": "val"},
-    meta=DatasetMeta(19, 255, CITYSCAPES_LABELS, CITYSCAPES_COLORS),
+    {"target_type": "semantic", "split": "train", "extra_index": 19},
+    {"target_type": "semantic", "split": "val", "extra_index": 19},
+    meta=DatasetMeta(20, 255, CITYSCAPES_LABELS, CITYSCAPES_COLORS),
     name="Cityscapes",
 )
 class CityscapesClass(datasets.Cityscapes):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, extra_index=255, **kwargs) -> None:
         """See :class:`torchvision.datasets.Cityscapes` for arguments"""
         super().__init__(*args, **kwargs)
+        self.extra_index = extra_index
         self.super_transforms = self.transforms
         self.transforms: Callable | None = None  # keep item in PIL.Image
 
@@ -61,7 +70,7 @@ class CityscapesClass(datasets.Cityscapes):
         image, target = super().__getitem__(index)
         assert isinstance(target, Image.Image)
         target_arr = np.array(target)
-        new_target = np.full_like(target_arr, 255)
+        new_target = np.full_like(target_arr, self.extra_index)
         for i, id_ in enumerate(_CITYSCAPES_TRAIN_IDS):
             new_target[target_arr == id_] = i
         target = Image.fromarray(new_target)
@@ -72,19 +81,21 @@ class CityscapesClass(datasets.Cityscapes):
 
 
 @register_dataset(
-    {"target_type": "semantic", "split": "train"},
-    {"target_type": "semantic", "split": "val"},
-    meta=DatasetMeta(7, 255, CITYSCAPES_CATEGORY_LABELS, CITYSCAPES_CATEGORY_COLORS),
+    {"target_type": "semantic", "split": "train", "extra_index": 7},
+    {"target_type": "semantic", "split": "val", "extra_index": 7},
+    meta=DatasetMeta(8, 255, CITYSCAPES_CATEGORY_LABELS, CITYSCAPES_CATEGORY_COLORS),
 )
 class CityscapesCategory(datasets.Cityscapes):
-    def __init__(self, *args, only_train=True, **kwargs) -> None:
+    def __init__(self, *args, only_train=True, extra_index=255, **kwargs) -> None:
         """See :class:`torchvision.datasets.Cityscapes` for arguments
 
         Args:
             only_train: only include ids that should be trained
+            extra_index: id for the remaining classes
         """
         super().__init__(*args, **kwargs)
         self.only_train = only_train
+        self.extra_index = extra_index
         self.super_transforms = self.transforms
         self.transforms: Callable | None = None  # keep item in PIL.Image
 
@@ -92,7 +103,7 @@ class CityscapesCategory(datasets.Cityscapes):
         image, target = super().__getitem__(index)
         assert isinstance(target, Image.Image)
         target_arr = np.array(target)
-        new_target = np.full_like(target_arr, 255)
+        new_target = np.full_like(target_arr, self.extra_index)
         for cat, ids in _CITYSCAPES_CATEGORY_IDS.items():
             for id_ in ids:
                 if self.only_train and id_ not in _CITYSCAPES_TRAIN_IDS:

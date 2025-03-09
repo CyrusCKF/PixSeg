@@ -20,7 +20,7 @@ LIP_LABELS = (
 @register_dataset(
     {"split": "train"},
     {"split": "val"},
-    meta=DatasetMeta.default(20, ignore_index=255, labels=LIP_LABELS),
+    meta=DatasetMeta.default(20, labels=LIP_LABELS),
 )
 class LIP(Dataset):
     """[Look into person](https://sysu-hcp.net/lip/) Dataset

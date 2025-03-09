@@ -76,12 +76,18 @@ def _main():
     from PIL import Image
     from torch.utils.data import Dataset
     from torchvision import datasets
+    from torchvision.datasets import Cityscapes
     from tqdm import tqdm
 
     pprint(DATASET_ZOO, width=150, compact=True)
     pprint(DATASET_METADATA, width=150, compact=True)
 
-    dataset: Dataset = COCOStuff(root=r"D:\_Dataset\coco", split="train")
+    dataset: Dataset = Cityscapes(
+        root=r"D:\_Dataset\Cityscapes",
+        split="train",
+        target_type="semantic",
+        transforms=SegmentationTransform((512, 512), 255),
+    )
     data: tuple[Image.Image | Tensor, Image.Image | Tensor] = dataset[1]
     _, mask = data
     if isinstance(mask, Tensor):
