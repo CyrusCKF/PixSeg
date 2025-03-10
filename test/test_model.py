@@ -42,10 +42,8 @@ def test_model(fake_inputs, model_builder: Callable[..., nn.Module]):
 
 def _main():
     from pprint import pprint
-    from timeit import default_timer
 
     import torchinfo
-    from tqdm import tqdm
 
     from src.semantic_segmentation_toolkit.datasets import resolve_metadata
 
@@ -60,12 +58,20 @@ def _main():
     for key, weights in MODEL_WEIGHTS.items():
         print(key, [w.name for w in weights])
 
-    # benchmark
+    _benchmark(input_size)
+
+
+def _benchmark(size=(1, 3, 512, 512), repeats=3):
+    from pprint import pprint
+    from timeit import default_timer
+
+    from tqdm import tqdm
+
     eval_times = {}
-    repeats = 3
-    fake_input = torch.rand(input_size)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    fake_input = torch.rand(size).to(device)
     for name, builder in tqdm(MODEL_ZOO.items()):
-        model = builder(num_classes=10).eval()
+        model = builder(num_classes=10).eval().to(device)
         [model(fake_input) for i in range(2)]  # warm up
         start_time = default_timer()
         [model(fake_input) for i in range(repeats)]

@@ -30,7 +30,7 @@ class FCN_ResNet34_Weights(SegWeightsEnum):
 @register_model()
 def fcn_vgg16(
     num_classes: int | None = None,
-    weights: str | None = None,
+    weights: FCN_ResNet34_Weights | str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: TM.VGG16_Weights | str | None = TM.VGG16_Weights.DEFAULT,

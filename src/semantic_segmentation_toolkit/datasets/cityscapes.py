@@ -57,14 +57,14 @@ register_dataset(
 
 
 @register_dataset(
-    {"split": "train", "class_groups": _groups, "extra_index": 19},
-    {"split": "val", "class_groups": _groups, "extra_index": 19},
+    {"split": "train", "class_groups": _groups, "extra_id": 19},
+    {"split": "val", "class_groups": _groups, "extra_id": 19},
     meta=DatasetMeta(20, 255, CITYSCAPES_LABELS, CITYSCAPES_COLORS),
     name="Cityscapes",
 )
 @register_dataset(
-    {"split": "train", "class_groups": _cat_groups, "extra_index": 7},
-    {"split": "val", "class_groups": _cat_groups, "extra_index": 7},
+    {"split": "train", "class_groups": _cat_groups, "extra_id": 7},
+    {"split": "val", "class_groups": _cat_groups, "extra_id": 7},
     meta=DatasetMeta.default(8, labels=CITYSCAPES_CATEGORY_LABELS),
     name="Cityscapes{category}",
 )

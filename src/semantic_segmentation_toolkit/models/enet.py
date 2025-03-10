@@ -233,14 +233,14 @@ class ENet_Weights(SegWeightsEnum):
 @register_model("enet")
 def enet_original(
     num_classes: int | None = None,
-    weights: str | None = None,
+    weights: ENet_Weights | str | None = None,
     progress: bool = True,
 ) -> ENet:
     """Construct a ENet model
 
     Args:
         num_classes: number of output classes of the model (including the background).
-        weights: Not supported yet. Must be None
+        weights: The pretrained weights to use.
         progress: If True, display the download progress.
     """
     weights_model = ENet_Weights.resolve(weights)
