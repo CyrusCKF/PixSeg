@@ -1,6 +1,6 @@
 from torch import nn
 from torch.hub import load_state_dict_from_url
-from torchvision.models import ResNet34_Weights, resnet34
+from torchvision.models import ResNet18_Weights, resnet18
 from torchvision.models.segmentation.deeplabv3 import (
     DeepLabHead,
     DeepLabV3,
@@ -19,14 +19,14 @@ register_model()(deeplabv3_resnet50)
 register_model()(deeplabv3_resnet101)
 
 
-@_generate_docstring("DeepLabV3 model with a ResNet-34 backbone")
+@_generate_docstring("DeepLabV3 model with a ResNet-18 backbone")
 @register_model()
-def deeplabv3_resnet34(
+def deeplabv3_resnet18(
     num_classes: int | None = None,
     weights: str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
-    weights_backbone: ResNet34_Weights | str | None = ResNet34_Weights.DEFAULT,
+    weights_backbone: ResNet18_Weights | str | None = ResNet18_Weights.DEFAULT,
 ) -> DeepLabV3:
     if weights is not None:
         raise NotImplementedError("Weights is not supported yet")
@@ -34,7 +34,7 @@ def deeplabv3_resnet34(
         None, weights_backbone, num_classes
     )
 
-    backbone_model = resnet34(weights=weights_backbone, progress=progress)
+    backbone_model = resnet18(weights=weights_backbone, progress=progress)
     backbone = ResNetBackbone(backbone_model)
     replace_layer_name(backbone, {-1: "out", -2: "aux"})
 

@@ -42,8 +42,10 @@ def test_model(fake_inputs, model_builder: Callable[..., nn.Module]):
 
 def _main():
     from pprint import pprint
+    from timeit import default_timer
 
     import torchinfo
+    from tqdm import tqdm
 
     from src.semantic_segmentation_toolkit.datasets import resolve_metadata
 
@@ -51,10 +53,25 @@ def _main():
     model = pspnet_resnet50(num_classes=num_classes)
     model.eval()
     print(model)
-    torchinfo.summary(model, [1, 3, 512, 1024])
+
+    input_size = [1, 3, 512, 1024]
+    torchinfo.summary(model, input_size)
     pprint(MODEL_ZOO.keys(), compact=True)
     for key, weights in MODEL_WEIGHTS.items():
         print(key, [w.name for w in weights])
+
+    # benchmark
+    eval_times = {}
+    repeats = 3
+    fake_input = torch.rand(input_size)
+    for name, builder in tqdm(MODEL_ZOO.items()):
+        model = builder(num_classes=10).eval()
+        [model(fake_input) for i in range(2)]  # warm up
+        start_time = default_timer()
+        [model(fake_input) for i in range(repeats)]
+        end_time = default_timer()
+        eval_times[name] = (end_time - start_time) / repeats
+    pprint(eval_times)
 
 
 if __name__ == "__main__":

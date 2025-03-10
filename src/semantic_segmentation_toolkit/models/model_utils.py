@@ -1,10 +1,11 @@
 import typing
-from inspect import Parameter, signature
+from enum import Enum
+from inspect import signature
 from typing import Any, Callable, ParamSpec, TypeVar
 
 from torch import nn
 
-from .model_registry import SegWeights, SegWeightsEnum
+from .model_registry import SegWeights
 
 W = TypeVar("W", bound=SegWeights | None)
 
@@ -50,38 +51,36 @@ def _generate_docstring(summary: str):
             {"num_classes", "weights", "progress"}
         )
 
-        arg_lines = [
-            "num_classes: number of output classes of the model (including the background)."
-        ]
-
         weight_names = []
         param = sig.parameters["weights"]
         for t in typing.get_args(param.annotation):
-            if isinstance(t, type) and issubclass(t, SegWeightsEnum):
+            if isinstance(t, type) and issubclass(t, Enum):
                 weight_names = [w.name for w in t]
-        weight_line = (
-            f"The pretrained weights to use. Possible values are: {weight_names}."
-            if len(weight_names) > 0
-            else "Not supported yet. Must be None"
-        )
-        arg_lines.append(f"weights: {weight_line}")
 
-        arg_lines.append("progress: If True, display the download progress.")
-        if "aux_loss" in sig.parameters:
-            arg_lines.append(
-                "aux_loss: If True, the model uses and returns an auxiliary loss."
-            )
+        backbone_weight_names = []
         if "weights_backbone" in sig.parameters:
-            arg_lines.append(
-                "weights_backbone: The pretrained weights for the backbone."
-            )
-        if (
-            "kwargs" in sig.parameters
-            and sig.parameters["kwargs"].kind == Parameter.VAR_KEYWORD
-        ):
-            arg_lines.append(
-                f"**kwargs: Parameters passed to the base class {sig.return_annotation}. Please refer to the source code for more details."
-            )
+            param = sig.parameters["weights_backbone"]
+            for t in typing.get_args(param.annotation):
+                if isinstance(t, type) and issubclass(t, Enum):
+                    backbone_weight_names = [w.name for w in t]
+
+        arg_desc = {
+            "num_classes": "Number of output classes of the model (including the background).",
+            "weights": f"The pretrained weights to use. Possible values are: {weight_names}.",
+            "progress": "If True, display the download progress.",
+            "aux_loss": "If True, the model uses and returns an auxiliary loss.",
+            "weights_backbone": f"The pretrained weights for the backbone. Possible values are: {backbone_weight_names}.",
+            "**kwargs": f"Parameters passed to the base class {sig.return_annotation}. Please refer to the source code for more details.",
+        }
+
+        if len(weight_names) == 0:
+            arg_desc["weights"] = "Not supported yet. Must be None"
+        if "aux_loss" not in sig.parameters:
+            arg_desc.pop("aux_loss")
+        if "weights_backbone" not in sig.parameters:
+            arg_desc.pop("weights_backbone")
+        if "kwargs" not in sig.parameters:
+            arg_desc.pop("**kwargs")
 
         doc = f"""{summary}
 
@@ -89,7 +88,7 @@ def _generate_docstring(summary: str):
 
 Args:
 """
-        doc += "\n".join("    " + s for s in arg_lines)
+        doc += "\n".join(f"    {n}: {s}" for n, s in arg_desc.items())
         func.__doc__ = doc
         return func
 

@@ -5,9 +5,9 @@ from .bisenet import (
     bisenet_resnet50,
     bisenet_xception,
 )
-from .deeplabv3 import deeplabv3_resnet34
+from .deeplabv3 import deeplabv3_resnet18
 from .enet import ENet, enet_original
-from .fcn import FCN_ResNet34_Weights, fcn_mobilenet_v3_large, fcn_resnet34, fcn_vgg16
+from .fcn import FCN_ResNet34_Weights, fcn_vgg16
 from .lraspp import lraspp_resnet18
 from .model_registry import (
     MODEL_WEIGHTS,
