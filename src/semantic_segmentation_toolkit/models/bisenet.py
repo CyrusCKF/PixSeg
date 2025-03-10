@@ -18,7 +18,7 @@ from .backbones import (
     xception_original,
 )
 from .model_registry import SegWeights, SegWeightsEnum, register_model
-from .model_utils import _validate_weights_input
+from .model_utils import _generate_docstring, _validate_weights_input
 
 
 class ConvNormAct(nn.Sequential):
@@ -203,14 +203,15 @@ class BiSeNet_ResNet18_Weights(SegWeightsEnum):
     DEFAULT = CITYSCAPES_FINE
 
 
-@register_model(weights_enum=BiSeNet_ResNet18_Weights)
+@_generate_docstring("Bilateral Segmentation Network model with a ResNet-18 backbone")
+@register_model()
 def bisenet_resnet18(
     num_classes: int | None = None,
     weights: BiSeNet_ResNet18_Weights | str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: ResNet18_Weights | str | None = ResNet18_Weights.DEFAULT,
-) -> nn.Module:
+) -> BiSeNet:
     weights_model = BiSeNet_ResNet18_Weights.resolve(weights)
     weights_model, weights_backbone, num_classes = _validate_weights_input(
         weights_model, weights_backbone, num_classes
@@ -229,6 +230,7 @@ def bisenet_resnet18(
     return model
 
 
+@_generate_docstring("Bilateral Segmentation Network model with a ResNet-50 backbone")
 @register_model()
 def bisenet_resnet50(
     num_classes: int | None = None,
@@ -236,7 +238,7 @@ def bisenet_resnet50(
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: ResNet50_Weights | str | None = ResNet50_Weights.DEFAULT,
-) -> nn.Module:
+) -> BiSeNet:
     if weights is not None:
         raise NotImplementedError("Weights is not supported yet")
     _, weights_backbone, num_classes = _validate_weights_input(
@@ -256,6 +258,12 @@ def bisenet_resnet50(
     return model
 
 
+@_generate_docstring(
+    """Bilateral Segmentation Network model with an Xception backbone
+
+Note that this is using the original Xception as backbone. The original paper suggested 
+using xception39 as backbone, but I can't seem to find its definition?"""
+)
 @register_model()
 def bisenet_xception(
     num_classes: int | None = None,
@@ -263,7 +271,7 @@ def bisenet_xception(
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: Xception_Weights | str | None = Xception_Weights.DEFAULT,
-) -> nn.Module:
+) -> BiSeNet:
     """Using the original Xception as backbone
 
     The BiSeNet paper suggested using xception39 as backbone, but I can't seem

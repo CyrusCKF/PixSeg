@@ -45,26 +45,16 @@ def _main():
 
     import torchinfo
 
-    from src.semantic_segmentation_toolkit.datasets import CITYSCAPES_LABELS, VOC_LABELS
+    from src.semantic_segmentation_toolkit.datasets import resolve_metadata
 
-    # model = pspnet_resnet50(num_classes=len(CITYSCAPES_LABELS))
-    # model.eval()
-    # print(model)
-    # torchinfo.summary(model, [1, 3, 512, 1024])
-    # pprint(MODEL_ZOO.keys(), compact=True)
-    # for key, weights in MODEL_WEIGHTS.items():
-    #     print(key, [w.name for w in weights])
-
-    nets = [upernet_resnet18(num_classes=10), upernet_resnet101(num_classes=10)]
-    for net in nets:
-        fake_input = torch.rand([4, 3, 512, 512])
-        output = net(fake_input)
-        print("output", output["out"].shape)
-        torchinfo.summary(
-            net,
-            input_data=fake_input,
-            col_names=("output_size", "num_params", "mult_adds"),
-        )
+    num_classes = resolve_metadata("Cityscapes").num_classes
+    model = pspnet_resnet50(num_classes=num_classes)
+    model.eval()
+    print(model)
+    torchinfo.summary(model, [1, 3, 512, 1024])
+    pprint(MODEL_ZOO.keys(), compact=True)
+    for key, weights in MODEL_WEIGHTS.items():
+        print(key, [w.name for w in weights])
 
 
 if __name__ == "__main__":

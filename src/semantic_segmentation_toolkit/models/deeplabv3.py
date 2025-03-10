@@ -12,13 +12,14 @@ from torchvision.models.segmentation.fcn import FCNHead
 
 from .backbones import ResNetBackbone, replace_layer_name
 from .model_registry import register_model
-from .model_utils import _validate_weights_input
+from .model_utils import _generate_docstring, _validate_weights_input
 
 register_model()(deeplabv3_mobilenet_v3_large)
 register_model()(deeplabv3_resnet50)
 register_model()(deeplabv3_resnet101)
 
 
+@_generate_docstring("DeepLabV3 model with a ResNet-34 backbone")
 @register_model()
 def deeplabv3_resnet34(
     num_classes: int | None = None,
@@ -26,7 +27,7 @@ def deeplabv3_resnet34(
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: ResNet34_Weights | str | None = ResNet34_Weights.DEFAULT,
-) -> nn.Module:
+) -> DeepLabV3:
     if weights is not None:
         raise NotImplementedError("Weights is not supported yet")
     weights_model, weights_backbone, num_classes = _validate_weights_input(

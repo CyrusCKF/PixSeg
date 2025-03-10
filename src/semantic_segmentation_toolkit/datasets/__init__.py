@@ -1,14 +1,12 @@
 from .ade20k import ADE20K, ADE20K_LABELS
 from .bdd100k import BDD100K
 from .cityscapes import (
-    CITYSCAPES_CATEGORY_COLORS,
     CITYSCAPES_CATEGORY_LABELS,
     CITYSCAPES_COLORS,
     CITYSCAPES_FULL_COLORS,
     CITYSCAPES_FULL_LABELS,
     CITYSCAPES_LABELS,
-    CityscapesCategory,
-    CityscapesClass,
+    CityscapesSubset,
 )
 from .coco_stuff import COCO_FULL_LABELS, COCO_STUFF_LABELS, COCO_VOC_LABELS, COCOStuff
 from .dataset_registry import (

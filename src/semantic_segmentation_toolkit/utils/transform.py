@@ -1,10 +1,14 @@
 import random
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Literal, Sequence
 
+import numpy
+import PIL
+import PIL.Image
 import torch
 from torch import Tensor, nn
 from torchvision.transforms import v2
 from torchvision.transforms.v2 import functional as TF
+from torchvision.transforms.v2._geometry import _FillType
 
 from .rng import get_rng_state, set_rng_state
 
@@ -52,6 +56,54 @@ class RandomRescale(v2.Transform):
         )
 
 
+class SafeRandomCrop(v2.Transform):
+    """:class:`torchvision.transforms.v2.RandomCrop` throws error when size is more than
+    double of input. This class repeats the process instead.
+
+    Expect input of shape (..., H, W) and type PIL Image, numpy array or tensor
+    """
+
+    def __init__(
+        self,
+        size: int | Sequence[int],
+        padding: int | Sequence[int] | None = None,
+        pad_if_needed: bool = False,
+        fill: _FillType | Dict[type | str, _FillType] = 0,
+        padding_mode: Literal["constant", "edge", "reflect", "symmetric"] = "constant",
+    ) -> None:
+        """See :class:`torchvision.transforms.v2.RandomCrop` for arguments"""
+        super().__init__()
+        # for initializing args
+        instance = v2.RandomCrop(size, padding, pad_if_needed, fill, padding_mode)
+        self.size = instance.size
+        self.target_size = (self.size[0], self.size[1])  # type: ignore
+        self.args = [
+            instance.padding,
+            instance.pad_if_needed,
+            instance.fill,
+            instance.padding_mode,
+        ]
+
+    def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
+        cur_size = self._get_inpt_size(inpt)
+        while cur_size != self.target_size:
+            next_size = [min(self.target_size[i], cur_size[i] * 2) for i in (0, 1)]
+            op = v2.RandomCrop(next_size, *self.args)
+            inpt = op(inpt)
+            cur_size = self._get_inpt_size(inpt)
+        return inpt
+
+    @staticmethod
+    def _get_inpt_size(inpt) -> tuple[int, int]:
+        if isinstance(inpt, PIL.Image.Image):
+            return inpt.size
+        if isinstance(inpt, numpy.ndarray):
+            return tuple(inpt.shape[-2:])
+        if isinstance(inpt, Tensor):
+            return (inpt.size(-2), inpt.size(-1))
+        raise ValueError(f"Input of type {type(inpt)} not supported")
+
+
 class ImageMaskTransform(nn.Module):
     """Data transform for semantic segmentation.
 
@@ -96,7 +148,6 @@ class SegmentationTransform(v2.Compose):
             v2.ToDtype(torch.long),
             lambda mask: torch.squeeze(mask, 0),
         ]
-        # TODO may pad if necessary (>2x the size)
         if size is not None:
             image_transforms.insert(
                 0, v2.RandomCrop(size, pad_if_needed=True, padding_mode="reflect")

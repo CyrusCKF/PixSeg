@@ -5,18 +5,19 @@ from torchvision.models.segmentation.lraspp import LRASPP, lraspp_mobilenet_v3_l
 
 from .backbones import ResNetBackbone, replace_layer_name
 from .model_registry import register_model
-from .model_utils import _validate_weights_input
+from .model_utils import _generate_docstring, _validate_weights_input
 
 register_model()(lraspp_mobilenet_v3_large)
 
 
+@_generate_docstring("Lite R-ASPP Network model with a ResNet-34 backbone")
 @register_model()
 def lraspp_resnet18(
     num_classes: int | None = None,
     weights: str | None = None,
     progress: bool = True,
     weights_backbone: ResNet18_Weights | str | None = ResNet18_Weights.DEFAULT,
-) -> nn.Module:
+) -> LRASPP:
     if weights is not None:
         raise NotImplementedError("Weights is not supported yet")
     weights_model, weights_backbone, num_classes = _validate_weights_input(

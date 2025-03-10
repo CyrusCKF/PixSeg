@@ -12,7 +12,7 @@ from torchvision.models.resnet import (
 from ..datasets import CITYSCAPES_LABELS
 from .backbones import ResNetBackbone
 from .model_registry import SegWeights, SegWeightsEnum, register_model
-from .model_utils import _validate_weights_input
+from .model_utils import _generate_docstring, _validate_weights_input
 from .sfnet import ConvNormAct, SFNet, flow_warp
 
 
@@ -135,6 +135,7 @@ class SFNetLite(SFNet):
         )
 
 
+@_generate_docstring("Semantic Flow Network Lite model with a ResNet-18 backbone")
 @register_model()
 def sfnet_lite_resnet18(
     num_classes: int | None = None,
@@ -158,6 +159,7 @@ def sfnet_lite_resnet18(
     return model
 
 
+@_generate_docstring("Semantic Flow Network Lite model with a ResNet-101 backbone")
 @register_model()
 def sfnet_lite_resnet101(
     num_classes: int | None = None,

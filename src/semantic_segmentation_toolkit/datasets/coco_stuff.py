@@ -41,11 +41,12 @@ COCO_FULL_LABELS = (
 """Index of COCO_FULL_LABELS"""
 # fmt: on
 _COCO_REMOVED_IDS = (11, 25, 28, 29, 44, 65, 67, 68, 70, 82, 90)
-_COCO_KEPT_IDS = tuple(
+_kept_ids = tuple(
     [i for i in range(len(COCO_FULL_LABELS)) if i not in _COCO_REMOVED_IDS]
 )
-COCO_STUFF_LABELS = tuple([COCO_FULL_LABELS[i] for i in _COCO_KEPT_IDS] + ["unlabeled"])
 _VOC_IDS = (0, 1, 2, 4, 5, 6, 8, 15, 16, 17, 18, 19, 20, 43, 61, 62, 63, 66, 71)
+
+COCO_STUFF_LABELS = tuple([COCO_FULL_LABELS[i] for i in _kept_ids] + ["unlabeled"])
 COCO_VOC_LABELS = tuple([COCO_FULL_LABELS[i] for i in _VOC_IDS] + ["unlabeled"])
 
 
@@ -53,11 +54,11 @@ COCO_VOC_LABELS = tuple([COCO_FULL_LABELS[i] for i in _VOC_IDS] + ["unlabeled"])
     {"split": "train", "include_ids": _VOC_IDS, "extra_id": 19},
     {"split": "val", "include_ids": _VOC_IDS, "extra_id": 19},
     meta=DatasetMeta.default(num_classes=20, labels=COCO_VOC_LABELS),
-    name="coco[voc]",
+    name="coco{voc}",
 )
 @register_dataset(
-    {"split": "train", "include_ids": _COCO_KEPT_IDS, "extra_id": 171},
-    {"split": "val", "include_ids": _COCO_KEPT_IDS, "extra_id": 171},
+    {"split": "train", "include_ids": _kept_ids, "extra_id": 171},
+    {"split": "val", "include_ids": _kept_ids, "extra_id": 171},
     meta=DatasetMeta.default(num_classes=172, labels=COCO_STUFF_LABELS),
     name="coco",
 )

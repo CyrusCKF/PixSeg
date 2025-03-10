@@ -80,11 +80,12 @@ MAPILLARY_FULL_COLORS = (
 )
 # fmt: on
 _MAPILLARY_NOT_EVALUATED = (2, 31, 38, 79, 86, 96, 115, 123)
-_MAPILLARY_TRAIN_IDS = tuple(
+
+_train_ids = tuple(
     [i for i in range(len(MAPILLARY_FULL_LABELS)) if i not in _MAPILLARY_NOT_EVALUATED]
 )
-MAPILLARY_LABELS = tuple([MAPILLARY_FULL_LABELS[i] for i in _MAPILLARY_TRAIN_IDS])
-MAPILLARY_COLORS = tuple([MAPILLARY_FULL_COLORS[i] for i in _MAPILLARY_TRAIN_IDS])
+MAPILLARY_LABELS = tuple([MAPILLARY_FULL_LABELS[i] for i in _train_ids])
+MAPILLARY_COLORS = tuple([MAPILLARY_FULL_COLORS[i] for i in _train_ids])
 
 
 @register_dataset(
@@ -125,7 +126,7 @@ class MapillaryVistas(Dataset):
         else:
             full_target = decode_image(self.target_files[index])
             target = torch.full_like(full_target, 255)
-            for i, id_ in enumerate(_MAPILLARY_TRAIN_IDS):
+            for i, id_ in enumerate(_train_ids):
                 target[full_target == id_] = i
 
         if self.transforms is not None:

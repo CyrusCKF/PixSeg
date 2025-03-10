@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from inspect import signature
 from typing import Callable, ParamSpec, Sequence, TypeVar
 
 from torch.utils.data import Dataset
@@ -64,7 +65,7 @@ DATASET_METADATA: dict[str, DatasetMeta | str] = {}
 DATASET_ZOO: dict[str, DatasetEntry] = {}
 """Mapping of dataset name to `DatabaseEntry`
 
-All dataset constructors must accept kwargs `root (Path|str)` and `transforms (Callable|None)`
+All dataset constructors must accept kwargs `transforms (Callable|None)`
 """
 
 
@@ -91,6 +92,12 @@ def register_dataset(
         key = callable.__name__ if name is None else name
         if key in DATASET_ZOO or key in DATASET_METADATA:
             raise KeyError(f"An entry is already registered under the key '{key}'.")
+        sig = signature(callable)
+        if "transforms" not in sig.parameters:
+            raise ValueError(
+                "dataset builder must accept kwargs `transforms (Callable|None)`,"
+                " which will be used to transform image and mask like transforms(image, mask)"
+            )
 
         DATASET_ZOO[key] = DatasetEntry(callable, train_kwargs, val_kwargs)
         meta_entry: DatasetMeta | str = (

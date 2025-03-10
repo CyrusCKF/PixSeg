@@ -11,7 +11,7 @@ from torchvision.models.segmentation.fcn import (
 from ..datasets import VOC_LABELS
 from .backbones import *
 from .model_registry import SegWeights, SegWeightsEnum, register_model
-from .model_utils import _validate_weights_input
+from .model_utils import _generate_docstring, _validate_weights_input
 
 register_model()(fcn_resnet50)
 register_model()(fcn_resnet101)
@@ -26,14 +26,15 @@ class FCN_ResNet34_Weights(SegWeightsEnum):
     DEFAULT = VOC2012
 
 
-@register_model(weights_enum=FCN_ResNet34_Weights)
+@_generate_docstring("Fully-Convolutional Network model with a ResNet-34 backbone")
+@register_model()
 def fcn_resnet34(
     num_classes: int | None = None,
     weights: FCN_ResNet34_Weights | str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: TM.ResNet34_Weights | str | None = TM.ResNet34_Weights.DEFAULT,
-) -> nn.Module:
+) -> FCN:
     weights_model = FCN_ResNet34_Weights.resolve(weights)
     weights_model, weights_backbone, num_classes = _validate_weights_input(
         weights_model, weights_backbone, num_classes
@@ -54,6 +55,9 @@ def fcn_resnet34(
     return model
 
 
+@_generate_docstring(
+    "Fully-Convolutional Network model with a MobileNetV3-Large backbone"
+)
 @register_model()
 def fcn_mobilenet_v3_large(
     num_classes: int | None = None,
@@ -63,7 +67,7 @@ def fcn_mobilenet_v3_large(
     weights_backbone: (
         TM.MobileNet_V3_Large_Weights | str | None
     ) = TM.MobileNet_V3_Large_Weights.DEFAULT,
-) -> nn.Module:
+) -> FCN:
     if weights is not None:
         raise NotImplementedError("Weights is not supported yet")
     _, weights_backbone, num_classes = _validate_weights_input(
@@ -80,6 +84,7 @@ def fcn_mobilenet_v3_large(
     return FCN(backbone, classifier, aux_classifier)
 
 
+@_generate_docstring("Fully-Convolutional Network model with a VGG-16 backbone.")
 @register_model()
 def fcn_vgg16(
     num_classes: int | None = None,
@@ -87,7 +92,7 @@ def fcn_vgg16(
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: TM.VGG16_Weights | str | None = TM.VGG16_Weights.DEFAULT,
-) -> nn.Module:
+) -> FCN:
     if weights is not None:
         raise NotImplementedError("Weights is not supported yet")
     _, weights_backbone, num_classes = _validate_weights_input(

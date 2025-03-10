@@ -17,7 +17,7 @@ from torchvision.models.resnet import (
 from ..datasets import CITYSCAPES_LABELS
 from .backbones import ResNetBackbone
 from .model_registry import SegWeights, SegWeightsEnum, register_model
-from .model_utils import _validate_weights_input
+from .model_utils import _generate_docstring, _validate_weights_input
 from .pspnet import PyramidPoolingModule
 
 
@@ -222,6 +222,7 @@ class SFNet(nn.Module):
         return {"out": main_out}
 
 
+@_generate_docstring("Semantic Flow Network model with a ResNet-18 backbone")
 @register_model()
 def sfnet_resnet18(
     num_classes: int | None = None,
@@ -230,7 +231,6 @@ def sfnet_resnet18(
     weights_backbone: ResNet18_Weights | str | None = ResNet18_Weights.DEFAULT,
     **kwargs,
 ) -> SFNet:
-    """See :class:`SFNet` for supported kwargs"""
     if weights is not None:
         raise NotImplementedError("Weights is not supported yet")
     _, weights_backbone, num_classes = _validate_weights_input(
@@ -245,6 +245,7 @@ def sfnet_resnet18(
     return model
 
 
+@_generate_docstring("Semantic Flow Network model with a ResNet-101 backbone")
 @register_model()
 def sfnet_resnet101(
     num_classes: int | None = None,

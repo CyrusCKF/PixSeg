@@ -1,5 +1,7 @@
+import typing
 from dataclasses import dataclass
 from enum import Enum
+from inspect import signature
 from typing import Any, Callable, ParamSpec, Sequence, TypeVar
 
 from torch import nn
@@ -40,7 +42,7 @@ class SegWeightsEnum(Enum):
             return obj
         if isinstance(obj, str):
             weight_name = obj.replace(cls.__name__ + ".", "")
-            # use try/catch not other checking because duplicate enum member cannot be found
+            # use "try/except" not "in" in case of duplicate enum member
             try:
                 obj = cls[weight_name]
             except:
@@ -55,6 +57,9 @@ class SegWeightsEnum(Enum):
             )
         return obj.value
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}.{self._name_}"
+
 
 MODEL_ZOO: dict[str, Callable[..., nn.Module]] = {}
 """Mapping of model name to the model builder"""
@@ -65,15 +70,15 @@ T = TypeVar("T", bound=nn.Module)
 P = ParamSpec("P")
 
 
-def register_model(
-    name: str | None = None, weights_enum: type[SegWeightsEnum] | None = None
-):
+def register_model(name: str | None = None):
     def wrapper(func: Callable[P, T]) -> Callable[P, T]:
         key = func.__name__ if name is None else name
-        if key in MODEL_ZOO or key in MODEL_WEIGHTS:
+        if key in MODEL_ZOO:
             raise KeyError(f"An entry is already registered under the key '{key}'.")
-
         MODEL_ZOO[key] = func
+
+        # try to infer weights enum and register it
+        weights_enum = _infer_weights_enum_from_builder(func)
         if weights_enum is not None:
             MODEL_WEIGHTS[key] = weights_enum
         return func
@@ -81,4 +86,56 @@ def register_model(
     return wrapper
 
 
-# TODO support APIs on https://pytorch.org/vision/main/models.html
+def _infer_weights_enum_from_builder(builder: Callable) -> type[SegWeightsEnum] | None:
+    """Try to infer weights enum from function signature"""
+    sig = signature(builder)
+    if "weights" not in sig.parameters:
+        return None
+    param = sig.parameters["weights"]
+    types = typing.get_args(param.annotation) + (param.annotation,)
+    for t in types:
+        if isinstance(t, type) and issubclass(t, SegWeightsEnum):
+            return t
+    return None
+
+
+"""Following functions are implemented to support 
+APIs similar to https://pytorch.org/vision/main/models.html"""
+
+
+def get_weight(model: str, name: str) -> SegWeights:
+    """Get the model weights by its name. Example: get_weight("")"""
+    weights = get_model_weights(model)[name].value
+    assert isinstance(weights, SegWeights)
+    return weights
+
+
+def get_model_weights(model: str) -> type[SegWeightsEnum]:
+    """Return the weights enum class associated to the given model."""
+    if model not in MODEL_WEIGHTS:
+        if model not in MODEL_ZOO:
+            raise ValueError(
+                f"Unknown model name {model}. Here are the available models: {MODEL_ZOO.keys()}"
+            )
+        else:
+            raise ValueError(f"Model {model} does not have pretrained weights.")
+    return MODEL_WEIGHTS[model]
+
+
+def list_models():
+    """Return a list with the names of registered models."""
+    return list(MODEL_ZOO.keys())
+
+
+def get_model_builder(name: str) -> Callable[..., nn.Module]:
+    """Gets the model name and returns the model builder method."""
+    if name not in MODEL_ZOO:
+        raise ValueError(
+            f"Unknown model name {name}. Here are the available models: {MODEL_ZOO.keys()}"
+        )
+    return MODEL_ZOO[name]
+
+
+def get_model(name: str, **config) -> nn.Module:
+    """Get the model name and configuration and return an instantiated model."""
+    return get_model_builder(name)(**config)

@@ -1,8 +1,10 @@
-from typing import Any, Callable
+from pathlib import Path
+from typing import Any, Literal, Sequence
 
 import numpy as np
 from PIL import Image
 from torchvision import datasets
+from torchvision.transforms.v2 import Transform
 
 from .dataset_registry import DatasetMeta, register_dataset
 
@@ -24,8 +26,8 @@ CITYSCAPES_FULL_COLORS = (
     (0, 0, 142), (0, 0, 70), (0, 60, 100), (0, 0, 90), (0, 0, 110), (0, 80, 100), 
     (0, 0, 230), (119, 11, 32)
 )
-_CITYSCAPES_TRAIN_IDS = (7, 8, 11, 12, 13, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33)
-_CITYSCAPES_CATEGORY_IDS:dict[str, tuple[int, ...]] = { # this is not frozen, so hide it
+_TRAIN_IDS = (7, 8, 11, 12, 13, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33)
+_CATEGORY_IDS:dict[str, tuple[int, ...]] = { # this is not frozen, so hide it
     "flat": (7, 8, 9, 10),
     "construction": (11, 12, 13, 14, 15, 16),
     "object": (17, 18, 19, 20),
@@ -34,84 +36,70 @@ _CITYSCAPES_CATEGORY_IDS:dict[str, tuple[int, ...]] = { # this is not frozen, so
     "human": (24, 25),
     "vehicle": (26, 27, 28, 29, 30, 31, 32, 33),
 }
-
 # fmt: on
 # Inlcude background classes
+_groups = tuple([(i,) for i in _TRAIN_IDS])
 CITYSCAPES_LABELS = tuple(
-    [CITYSCAPES_FULL_LABELS[i] for i in _CITYSCAPES_TRAIN_IDS] + ["background"]
+    [CITYSCAPES_FULL_LABELS[i] for i in _TRAIN_IDS] + ["background"]
 )
-CITYSCAPES_COLORS = tuple(
-    [CITYSCAPES_FULL_COLORS[i] for i in _CITYSCAPES_TRAIN_IDS] + [(0, 0, 0)]
-)
-CITYSCAPES_CATEGORY_LABELS = tuple(
-    list(_CITYSCAPES_CATEGORY_IDS.keys()) + ["background"]
-)
-CITYSCAPES_CATEGORY_COLORS = tuple(
-    [CITYSCAPES_FULL_COLORS[ids[0]] for ids in _CITYSCAPES_CATEGORY_IDS.values()]
-    + [(0, 0, 0)]
-)
+CITYSCAPES_COLORS = tuple([CITYSCAPES_FULL_COLORS[i] for i in _TRAIN_IDS] + [(0, 0, 0)])
+
+_cat_groups = tuple(_CATEGORY_IDS.values())
+CITYSCAPES_CATEGORY_LABELS = tuple(_CATEGORY_IDS.keys()) + ("background",)
+
+
+register_dataset(
+    {"target_type": "semantic", "split": "train"},
+    {"target_type": "semantic", "split": "val"},
+    meta=DatasetMeta(34, 255, CITYSCAPES_FULL_LABELS, CITYSCAPES_FULL_COLORS),
+    name="Cityscapes{full}",
+)(datasets.Cityscapes)
 
 
 @register_dataset(
-    {"target_type": "semantic", "split": "train", "extra_index": 19},
-    {"target_type": "semantic", "split": "val", "extra_index": 19},
+    {"split": "train", "class_groups": _groups, "extra_index": 19},
+    {"split": "val", "class_groups": _groups, "extra_index": 19},
     meta=DatasetMeta(20, 255, CITYSCAPES_LABELS, CITYSCAPES_COLORS),
     name="Cityscapes",
 )
-class CityscapesClass(datasets.Cityscapes):
-    def __init__(self, *args, extra_index=255, **kwargs) -> None:
-        """See :class:`torchvision.datasets.Cityscapes` for arguments"""
-        super().__init__(*args, **kwargs)
-        self.extra_index = extra_index
-        self.super_transforms = self.transforms
-        self.transforms: Callable | None = None  # keep item in PIL.Image
-
-    def __getitem__(self, index) -> Any:
-        image, target = super().__getitem__(index)
-        assert isinstance(target, Image.Image)
-        target_arr = np.array(target)
-        new_target = np.full_like(target_arr, self.extra_index)
-        for i, id_ in enumerate(_CITYSCAPES_TRAIN_IDS):
-            new_target[target_arr == id_] = i
-        target = Image.fromarray(new_target)
-
-        if self.super_transforms is not None:
-            image, target = self.super_transforms(image, target)
-        return image, target
-
-
 @register_dataset(
-    {"target_type": "semantic", "split": "train", "extra_index": 7},
-    {"target_type": "semantic", "split": "val", "extra_index": 7},
-    meta=DatasetMeta(8, 255, CITYSCAPES_CATEGORY_LABELS, CITYSCAPES_CATEGORY_COLORS),
+    {"split": "train", "class_groups": _cat_groups, "extra_index": 7},
+    {"split": "val", "class_groups": _cat_groups, "extra_index": 7},
+    meta=DatasetMeta.default(8, labels=CITYSCAPES_CATEGORY_LABELS),
+    name="Cityscapes{category}",
 )
-class CityscapesCategory(datasets.Cityscapes):
-    def __init__(self, *args, only_train=True, extra_index=255, **kwargs) -> None:
-        """See :class:`torchvision.datasets.Cityscapes` for arguments
+class CityscapesSubset(datasets.Cityscapes):
+    def __init__(
+        self,
+        root: str | Path,
+        split: Literal["train", "val", "test"],
+        class_groups: Sequence[Sequence[int]],
+        extra_id: int,
+        mode: Literal["fine", "coarse"] = "fine",
+        transforms: Transform | None = None,
+    ) -> None:
+        """Cityscapes dataset that only includes a subset of classes
 
         Args:
-            only_train: only include ids that should be trained
-            extra_index: id for the remaining classes
+            class_groups: Group of classes to use. Each group will be mapped to the same id
+            extra_id: ID for the remaining classes
+            **kwargs: See :class:`torchvision.datasets.Cityscapes` for other arguments
         """
-        super().__init__(*args, **kwargs)
-        self.only_train = only_train
-        self.extra_index = extra_index
-        self.super_transforms = self.transforms
-        self.transforms: Callable | None = None  # keep item in PIL.Image
+        super().__init__(root, split, mode, target_type="semantic")
+        self.final_transforms = transforms  # keep parent get item the same type
+        self.class_groups = class_groups
+        self.extra_id = extra_id
 
     def __getitem__(self, index) -> Any:
         image, target = super().__getitem__(index)
         assert isinstance(target, Image.Image)
         target_arr = np.array(target)
-        new_target = np.full_like(target_arr, self.extra_index)
-        for cat, ids in _CITYSCAPES_CATEGORY_IDS.items():
-            for id_ in ids:
-                if self.only_train and id_ not in _CITYSCAPES_TRAIN_IDS:
-                    continue
-                cat_id = CITYSCAPES_CATEGORY_LABELS.index(cat)
-                new_target[target_arr == id_] = cat_id
+        new_target = np.full_like(target_arr, self.extra_id)
+        for new_id, classes in enumerate(self.class_groups):
+            for old_id in classes:
+                new_target[target_arr == old_id] = new_id
         target = Image.fromarray(new_target)
 
-        if self.super_transforms is not None:
-            image, target = self.super_transforms(image, target)
+        if self.final_transforms is not None:
+            image, target = self.final_transforms(image, target)
         return image, target

@@ -12,7 +12,7 @@ from torchvision.models.resnet import (
 from ..datasets import CITYSCAPES_LABELS
 from .backbones import ResNetBackbone
 from .model_registry import SegWeights, SegWeightsEnum, register_model
-from .model_utils import _validate_weights_input
+from .model_utils import _generate_docstring, _validate_weights_input
 from .pspnet import PyramidPoolingModule
 
 
@@ -121,6 +121,7 @@ class UperNet(nn.Module):
         return {"out": main_out}
 
 
+@_generate_docstring("Unified Perceptual Network Lite model with a ResNet-18 backbone")
 @register_model()
 def upernet_resnet18(
     num_classes: int | None = None,
@@ -142,6 +143,7 @@ def upernet_resnet18(
     return model
 
 
+@_generate_docstring("Unified Perceptual Network Lite model with a ResNet-101 backbone")
 @register_model()
 def upernet_resnet101(
     num_classes: int | None = None,
