@@ -181,7 +181,7 @@ class SFNetHead(nn.Module):
 
 class SFNet(nn.Module):
     """Implement SFNet from [Semantic Flow for Fast and Accurate Scene
-    Parsing](https://arxiv.org/pdf/2002.10120)"""
+    Parsing](https://arxiv.org/abs/2002.10120)"""
 
     def __init__(
         self,

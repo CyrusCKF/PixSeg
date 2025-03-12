@@ -4,12 +4,14 @@ For those who want to have a deeper look at this project
 
 ## Folder structure
 
-- `src\semantic_segmentation_toolkit` - Main source code
+- `doc` - Documentations, examples and related assets
+- `src/semantic_segmentation_toolkit` - Main source code
   - `datasets` - Custom datasets and associated metadata(labels, background index, etc ...)
-  - `models` - Custom models, model weights and backbones
+  - `models` - Custom models, model weights and model builders
+    - `models/backbones` - Model backbones and weights
   - `learn` - Custom loss functions, class weights, optimizers, and learning rate schedulers
   - `utils` - Smaller components and utility functions
-  - `pipeline` - Integrate components for  training and evaluation
+  - `pipeline` - Integrate components for training, evaluation and testing
 - `tasks` - Entry points to run this project
 - `test` - Unit test
 

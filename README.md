@@ -28,7 +28,7 @@ model = torch.hub.load(
 )
 ```
 
-Refer to <https://pytorch.org/docs/main/hub.html> for more usage. As this project shares the same interface as TorchVision, you may also refer to this section [Using models from Hub](https://pytorch.org/vision/main/models.html#using-models-from-hub) on how to use vision models via PyTorch Hub.
+Refer to [doc/using_hub.ipynb](doc/using_hub.ipynb) for more usage. As this project shares the same interface as TorchVision, you may also refer to [the official doc](<https://pytorch.org/docs/main/hub.html>) or this section [Using models from Hub](https://pytorch.org/vision/main/models.html#using-models-from-hub) on how to use vision models via PyTorch Hub.
 
 ### *Option 2* Import as package
 
@@ -129,27 +129,51 @@ Some of them is available in PyTorch. They are listed here for clarity and to sh
 
 Each dataset returns a tuple of (image, mask)
 
-- **VOC** | [website]() • [code]() • [paperswithcode]()
+#### General Scene
+
+- **ADE20K** | [website](https://ade20k.csail.mit.edu/) • [download](http://data.csail.mit.edu/places/ADEchallenge/ADEChallengeData2016.zip) • [benchmark](https://paperswithcode.com/sota/semantic-segmentation-on-ade20k)
+- **COCO-Stuff** | [website](https://github.com/nightrome/cocostuff) • [benchmark](https://paperswithcode.com/sota/semantic-segmentation-on-coco-stuff-test)
+- **Semantic Boundaries Dataset** | [download](https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/semantic_contours/benchmark.tgz)
+- **PASCAL VOC** | [website](http://host.robots.ox.ac.uk/pascal/VOC/) • [benchmark](https://paperswithcode.com/sota/semantic-segmentation-on-pascal-voc-2012)
+
+#### Street scene
+
+- **BDD100K** (The official doc is not accessible now?) | [website](http://bdd-data.berkeley.edu/) • [benchmark](https://paperswithcode.com/sota/semantic-segmentation-on-bdd100k-val)
+- **Cityscapes** | [website](https://www.cityscapes-dataset.com/) • [benchmark](https://paperswithcode.com/sota/semantic-segmentation-on-cityscapes-val)
+- **Mapillary Vistas** | [website](https://www.cityscapes-dataset.com/) • [benchmark](https://paperswithcode.com/sota/semantic-segmentation-on-mapillary-val)
+
+#### Human parts
+
+- **Look Into Person** | [website](https://sysu-hcp.net/lip/) • [benchmark](https://paperswithcode.com/sota/semantic-segmentation-on-lip-val)
 
 ### Models
 
-Each model returns a dict like `{ "out": Tensor }`. May contain *"aux"* for auxillary logits.
+Each model returns a dict like `{ "out": Tensor }`. May contain other keys like *"aux"* for auxillary logits or [Deeply-Supervised Nets](https://arxiv.org/abs/1409.5185).
 
-- **FCN** Fully Convolutional Networks for Semantic Segmentation (2014) | [paper](https://arxiv.org/abs/1411.4038) • [code](src/semantic_segmentation_toolkit/models/fcn.py) • [weights](https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/tag/fcn)
-
-- **PSPNet** Pyramid Scene Parsing Network (2016) | [paper](https://arxiv.org/abs/1612.01105) • [code](src/semantic_segmentation_toolkit/models/pspnet.py) • [weights](https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/tag/pspnet)
-
-- **DeepLabv3** Rethinking Atrous Convolution for Semantic Image Segmentation (2017) | [paper](https://arxiv.org/abs/1706.05587) • [code](src/semantic_segmentation_toolkit/models/pytorch_models.py) • [weights](https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/tag/deeplabv3)
+- **BiSeNet** BiSeNet: Bilateral Segmentation Network for Real-time Semantic Segmentation (2018) | [paper](https://arxiv.org/abs/1808.00897) • [weights](https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/tag/bisenet)
+- **DeepLabv3** Rethinking Atrous Convolution for Semantic Image Segmentation (2017) | [paper](https://arxiv.org/abs/1706.05587) • [weights](https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/tag/deeplabv3)
+- **ENet** ENet: A Deep Neural Network Architecture for Real-Time Semantic Segmentation (2016) | [paper](https://arxiv.org/abs/1606.02147) • [weights](https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/tag/enet)
+- **FCN** Fully Convolutional Networks for Semantic Segmentation (2014) | [paper](https://arxiv.org/abs/1411.4038) • [weights](https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/tag/fcn)
+- **LRASPP** Searching for MobileNetV3 (2019) | [paper](https://arxiv.org/abs/1905.02244) • weights TBD
+- **PSPNet** Pyramid Scene Parsing Network (2016) | [paper](https://arxiv.org/abs/1612.01105) • [weights](https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/tag/pspnet)
+- **SFNet-Lite** (2023) | [reference](https://github.com/lxtGH/SFSegNets) • weights TBD
+- **SFNet** Semantic Flow for Fast and Accurate Scene Parsing (2020) | [paper](https://arxiv.org/abs/2002.10120) • [weights](https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/tag/sfnet)
+- **UPerNet** Unified Perceptual Parsing for Scene Understanding (2018) | [paper](https://arxiv.org/abs/1807.10221) • weights TBD
 
 ### Model weights
 
-Available in <https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases>. The model files can be found inside the Assets tab. The specification of each pretrained model is shown. In particular, *mIoU(tta)* means evaluating with these test-time augmentations: multi-scale of (0.5, 0.75, 1.0, 1.25, 1.5, 1.75) x horizontal flip of both on and off. *MACs* is the number of multiply-accumulate operations. *Memory* and *MACs* are calculated with batch size of 1. *Params*, *Memory* and *MACs* are calculated without auxillary head.
+Available in <https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases>. The model files can be found inside the Assets tab. The specification of each pretrained model is shown.
+
+In particular, *mIoU(tta)* means evaluating with these test-time augmentations: multi-scale of (0.5, 0.75, 1.0, 1.25, 1.5, 1.75) x horizontal flip of both on and off. *MACs* is the number of multiply-accumulate operations. *Memory* and *MACs* are calculated with batch size of 1. *Time* is recorded using eval mode with batch size of 1 on RTX3070.
 
 ### Backbones
 
 Each backbone returns an ordered dict of features, from fine to coarse.
 
-- **VGG** Very Deep Convolutional Networks for Large-Scale Image Recognition (2014) | [paper](https://arxiv.org/abs/1409.1556) • [code](src/semantic_segmentation_toolkit/models/backbones/vgg.py)
+- **MobileNetV3** Searching for MobileNetV3 (2019) | [paper](https://arxiv.org/abs/1905.02244)
+- **ResNet** Deep Residual Learning for Image Recognition (2015) | [paper](https://arxiv.org/abs/1512.03385)
+- **VGG** Very Deep Convolutional Networks for Large-Scale Image Recognition (2014) | [paper](https://arxiv.org/abs/1409.1556)
+- **Xception** Xception: Deep Learning with Depthwise Separable Convolutions (2016) | [paper](https://arxiv.org/abs/1610.02357) • [weights](https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/tag/xception)
 
 ### Loss functions
 
@@ -217,7 +241,15 @@ In the **\[full\]** version, trainer can record results locally or to various se
 
 ## Plans
 
-- More models (types, backbones, builders)
-- More pretrained weights
+- More models (types, backbones)
+  - Planned: PIDNet, Deeplabv3+, RegSeg, EfficientNet
 - More datasets
-- Proofread this README
+  - Planned: [LoveDA](https://github.com/Junjue-Wang/LoveDA), [iSAID](https://captain-whu.github.io/iSAID/), [ISPRS](https://www.isprs.org/education/benchmarks/UrbanSemLab/default.aspx)
+  - Unify dataset of similar nature, e.g. dash cam, aerial images
+- More pretrained weights
+  - At least one weights for each model builder
+  - At least one pretrained lightweight model and performant model for each dataset
+- More loggers
+- Rename project to shorter name
+- Update usage examples
+- Proofread README, docs and docstring
