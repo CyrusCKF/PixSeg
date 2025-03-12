@@ -4,8 +4,8 @@ try:
     from .config import Config
     from .engine import create_snapshots, eval_one_epoch, forward_batch, train_one_epoch
     from .logger import LocalLogger, TensorboardLogger, WandbLogger, init_logging
-    from .testtime import (
-        TesttimeAugmentations,
+    from .test_time import (
+        TestTimeAugmentations,
         inference_with_augmentations,
         inference_with_sliding_window,
     )

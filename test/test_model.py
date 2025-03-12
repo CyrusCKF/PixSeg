@@ -48,7 +48,7 @@ def _main():
     from src.semantic_segmentation_toolkit.datasets import resolve_metadata
 
     num_classes = resolve_metadata("Cityscapes").num_classes
-    model = pspnet_resnet50(num_classes=num_classes)
+    model = sfnet_lite_resnet101(num_classes=num_classes)
     model.eval()
     print(model)
 
@@ -58,7 +58,7 @@ def _main():
     for key, weights in MODEL_WEIGHTS.items():
         print(key, [w.name for w in weights])
 
-    _benchmark(input_size)
+    # _benchmark(input_size)
 
 
 def _benchmark(size=(1, 3, 512, 512), repeats=3):

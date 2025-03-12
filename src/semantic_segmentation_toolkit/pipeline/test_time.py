@@ -131,7 +131,7 @@ def threshold_prob(prob: np.ndarray, threshold=0.5) -> dict[int, np.ndarray]:
 #####
 
 
-class TesttimeAugmentations:
+class TestTimeAugmentations:
     def __init__(
         self,
         scales: Sequence[float] = (1,),
@@ -187,7 +187,7 @@ class TesttimeAugmentations:
 
 @torch.no_grad()
 def inference_with_augmentations(
-    model: nn.Module, images: Tensor, ttas: TesttimeAugmentations
+    model: nn.Module, images: Tensor, ttas: TestTimeAugmentations
 ) -> Tensor:
     """
     Args:

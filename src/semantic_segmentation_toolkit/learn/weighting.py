@@ -61,7 +61,7 @@ def log_frequency(dataset: Dataset, num_classes: int):
 def effective_number(dataset: Dataset, num_classes: int):
     """Custom implementation of Effective Number of Samples
 
-    Source: https://arxiv.org/pdf/1901.05555v1
+    Source: https://arxiv.org/abs/1901.05555v1
 
     Beta is chosen so that the class weights are meaningful in the
     context of semantic segmentation

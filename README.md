@@ -164,7 +164,7 @@ Each model returns a dict like `{ "out": Tensor }`. May contain other keys like 
 
 Available in <https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases>. The model files can be found inside the Assets tab. The specification of each pretrained model is shown.
 
-In particular, *mIoU(tta)* means evaluating with these test-time augmentations: multi-scale of (0.5, 0.75, 1.0, 1.25, 1.5, 1.75) x horizontal flip of both on and off. *MACs* is the number of multiply-accumulate operations. *Memory* and *MACs* are calculated with batch size of 1. *Time* is recorded using eval mode with batch size of 1 on RTX3070.
+In particular, *mIoU(tta)* means evaluating with these test-time augmentations: multi-scale of (0.5, 0.75, 1.0, 1.25, 1.5) x horizontal flip of both on and off. *MACs* is the number of multiply-accumulate operations. *Memory* and *MACs* are calculated with batch size of 1. *Time* is estimated using eval mode with batch size of 1 on RTX3070.
 
 ### Backbones
 
@@ -177,21 +177,25 @@ Each backbone returns an ordered dict of features, from fine to coarse.
 
 ### Loss functions
 
-- DiceLoss | [code]()
+- **Cross Entropy Loss**
+- **Dice Loss** Generalised Dice overlap as a deep learning loss function for highly unbalanced segmentations | [paper](https://arxiv.org/abs/1707.03237v3)
+- **Focal Loss** Focal Loss for Dense Object Detection | [paper](https://arxiv.org/abs/1708.02002v2)
 
-#### Loss weights
+### Loss weights
 
-Each weighting takes dataset and calculate the loss weights for each class.
+Each weighting takes a dataset and calculates the loss weights for each class.
 
-- Effective number of samples | [paper]() • [code]()
+Supported algorithms: **Inverse frequency** | **Inverse square root frequency** | **Inverse log frequency** | **Inverse effective number of samples** [(reference)](https://arxiv.org/abs/1901.05555v1)
 
 ### Optimizers
 
-- **Padam** ([paper]() • [code]())
+- **SGD**
+- **Adam** Adam: A Method for Stochastic Optimization | [paper](https://arxiv.org/abs/1412.6980)
+- **Padam** Closing the Generalization Gap of Adaptive Gradient Methods in Training Deep Neural Networks | [paper](https://arxiv.org/abs/1806.06763)
 
 ### LR schedulers
 
-All are PyTorch builtin and registered to be used in config.
+Supported all algorithms provided by PyTorch, including: **StepLR** | **PolynomialLR** | **OneCycleLR** | **CosineAnnealingLR**
 
 ### Transforms
 
@@ -199,11 +203,23 @@ This project separates data transforms and data augmentations, so that visualiza
 
 - Data transforms
 
+  Ensure images and targets are in the correct type and shape. See [source code](https://github.com/CyrusCKF/semantic-segmentation-toolkit/blob/main/src/semantic_segmentation_toolkit/utils/transform.py#L132) of `SegmentationTransform` for details
+
 - Data augmentations
+
+  Provide a parametrised interface of common augmentations. See [source code](https://github.com/CyrusCKF/semantic-segmentation-toolkit/blob/main/src/semantic_segmentation_toolkit/utils/transform.py#L164) of `SegmentationAugment` for details
 
 ### Metrics
 
-- Accuracy $`= (1/n) * \sum TP / (TP + TN + FP + FN)`$
+Let $n$ be number of classes and $S_i$ be number of ground truths in class $i$, i.e. $S_i = TP_i + FN_i$. Denote total number of samples to be $S = \sum_{i=1}^n S_i = TP + TN + FP + FN$
+
+```math
+\text{accuracy} = \frac{TP}{S} \newline
+\text{mean accuracy} = \frac{1}{n} \times \sum_{i=1}^n \frac{TP_i}{S_i} \newline
+\text{mean IoU} = \frac{1}{n} \times \sum_{i=1}^n \frac{TP_i}{TP_i + FP_i + FN_i} \newline
+\text{frequency-weighted IoU} = \frac{1}{S} \times \sum_{i=1}^n  S_i \times \frac{TP_i}{TP_i + TN_i + FP_i} \newline
+\text{Dice} = \frac{1}{n} \times \sum_{i=1}^n \frac{2 \times TP_i}{2 \times TP_i + FP_i + FN_i} \newline
+```
 
 ### Loggers\*
 
@@ -220,7 +236,7 @@ See [doc\config_doc.ipynb](doc\config_doc.ipynb) for explanation of each field.
 
 ### Test time\*
 
-Test-time augmentations and sliding window inference. Others don't really do much
+Test-time augmentations and sliding window inference. Other techniques don't really do much. See [tasks\inference.ipynb](tasks\inference.ipynb) for demonstrations.  
 
 \* Only available in the full version
 
@@ -230,14 +246,21 @@ In the **\[full\]** version, trainer can record results locally or to various se
 
 ### Local
 
-- Logs
-- Checkpoints and models
-- Confusion matrix
-- Snapshots
+Logs, confusion matrix, snapshots, checkpoints and models
+
+<img src="doc\assets\cm_example.png" alt="confusion matrix example" width="40%"/>
+<img src="doc\assets\snapshot_example.png" alt="snapshot example" width="40%"/>
 
 ### WandB
 
+Most params in config will uploaded. Metrics are tracked each epoch.
+
+<img src="doc\assets\wandb_table.png" alt="wandb table" width="70%"/>
+<img src="doc\assets\wandb_graph.png" alt="wandb graph" width="70%"/>
+
 ### Tensorboard
+
+TODO
 
 ## Plans
 

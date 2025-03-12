@@ -9,7 +9,7 @@ from torchvision.models.resnet import (
     resnet50,
 )
 
-from ..datasets import CITYSCAPES_LABELS
+from ..datasets import CITYSCAPES_LABELS, VOC_LABELS
 from .backbones import (
     ResNetBackbone,
     Xception_Weights,
@@ -196,9 +196,14 @@ class BiSeNet(nn.Module):
 
 class BiSeNet_ResNet18_Weights(SegWeightsEnum):
     CITYSCAPES_FINE = SegWeights(
-        "bisenet/bisenet_resnet18-cityscapes-512x1024-20250305.pth",
+        "bisenet/bisenet_resnet18-cityscapes-512x1024.pth",
         CITYSCAPES_LABELS,
         "Trained on Cityscapes (fine) dataset",
+    )
+    SBD = SegWeights(
+        "bisenet/bisenet_resnet18-sbd-500x500.pth",
+        VOC_LABELS,
+        "Trained on SBD",
     )
     DEFAULT = CITYSCAPES_FINE
 
