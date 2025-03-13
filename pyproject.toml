@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "semantic-segmentation-toolkit"
+name = "pixseg"
 version = "0.1.2"
 requires-python = ">=3.10"
 dependencies = ["torch>=2.6.0", "torchvision>=0.21.0", "torchaudio>=2.6.0"]
@@ -40,7 +40,7 @@ full = [
     "tensorboard>=2.19.0",
 ]
 dev = [
-    "semantic-segmentation-toolkit[full]",
+    "pixseg[full]",
     "torchinfo>=1.8.0",
     "jupyter>=1.1.1",
     "pytest>=8.3.4",
@@ -51,7 +51,7 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/CyrusCKF/segmentic-segmentation-toolkit"
-Documentation = "https://github.com/CyrusCKF/segmentic-segmentation-toolkit/blob/main/README.md"
-Repository = "https://github.com/CyrusCKF/segmentic-segmentation-toolkit"
-Issues = "https://github.com/CyrusCKF/segmentic-segmentation-toolkit/issues"
+Homepage = "https://github.com/CyrusCKF/pixseg"
+Documentation = "https://github.com/CyrusCKF/pixseg/blob/main/README.md"
+Repository = "https://github.com/CyrusCKF/pixseg"
+Issues = "https://github.com/CyrusCKF/pixseg/issues"

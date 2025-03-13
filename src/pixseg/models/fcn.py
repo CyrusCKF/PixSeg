@@ -1,4 +1,3 @@
-from torch import nn
 from torch.hub import load_state_dict_from_url
 from torchvision import models as TM
 from torchvision.models.segmentation.fcn import (
@@ -17,20 +16,11 @@ register_model()(fcn_resnet50)
 register_model()(fcn_resnet101)
 
 
-class FCN_ResNet34_Weights(SegWeightsEnum):
-    VOC2012 = SegWeights(
-        "fcn/fcn_resnet34-voc2012-500x500-20250221.pth",
-        VOC_LABELS,
-        "Trained on PASCAL VOC 2012 dataset",
-    )
-    DEFAULT = VOC2012
-
-
 @_generate_docstring("Fully-Convolutional Network model with a VGG-16 backbone.")
 @register_model()
 def fcn_vgg16(
     num_classes: int | None = None,
-    weights: FCN_ResNet34_Weights | str | None = None,
+    weights: str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: TM.VGG16_Weights | str | None = TM.VGG16_Weights.DEFAULT,

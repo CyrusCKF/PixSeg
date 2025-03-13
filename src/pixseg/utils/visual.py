@@ -15,7 +15,7 @@ try:
 except ModuleNotFoundError:
     raise ImportError(
         f"This module {__name__.replace('src.', '')} is not available."
-        f" Please install via 'pip install semantic-segmentation-toolkit[full]'"
+        f" Please install via 'pip install pixseg[full]'"
     ) from None
 
 

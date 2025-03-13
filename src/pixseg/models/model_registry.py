@@ -15,9 +15,7 @@ class SegWeights:
     file_path: str
     labels: Sequence[str]
     description: str
-    base_url: str = (
-        "https://github.com/CyrusCKF/semantic-segmentation-toolkit/releases/download/"
-    )
+    base_url: str = "https://github.com/CyrusCKF/pixseg/releases/download/"
     transforms: Callable[..., Transform] = SegmentationTransform
 
     @property

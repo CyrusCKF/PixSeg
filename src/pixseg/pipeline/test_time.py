@@ -232,14 +232,14 @@ def inference_with_sliding_window(
 
     results: list[Tensor] = []
     for start in itertools.product(*start_indices):
-        # skip first 2 indices
-        slices = [slice(None), slice(None)] + [
-            slice(s, s + w) for s, w in zip(start, window_size)
-        ]
+        slices = [slice(None), slice(None)]  # skip first 2 indices
+        for i, (s, w) in enumerate(zip(start, window_size)):
+            length = min(w, images.shape[2 + i] - s)
+            slices.append(slice(s, s + length))
         cropped_image = images[slices]
 
         logits: Tensor = model(cropped_image)["out"]
-        logits = F.interpolate(logits, window_size, mode="bilinear")
+        logits = F.interpolate(logits, cropped_image.shape[2:], mode="bilinear")
         logits_put_back = torch.zeros(logits.shape[:2] + images.shape[2:])
         logits_put_back[slices] = logits
         results.append(logits_put_back)

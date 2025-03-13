@@ -8,7 +8,7 @@ from torch import Tensor, nn
 from torchvision.models import *  # type: ignore
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
-from src.semantic_segmentation_toolkit.models.backbones import *
+from src.pixseg.models.backbones import *
 
 parameters = [
     (ResNetBackbone, resnet18, lambda x: x.layer_channels()),

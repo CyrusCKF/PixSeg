@@ -10,9 +10,9 @@ import torch
 from torch.utils.data import Dataset
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
-from src.semantic_segmentation_toolkit.datasets import register_dataset
-from src.semantic_segmentation_toolkit.pipeline import Config
-from src.semantic_segmentation_toolkit.utils.rng import seed
+from src.pixseg.datasets import register_dataset
+from src.pixseg.pipeline import Config
+from src.pixseg.utils.rng import seed
 
 NUM_FAKE_CLASSES = 10
 

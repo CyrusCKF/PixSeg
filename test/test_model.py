@@ -7,7 +7,7 @@ import torch
 from torch import Tensor, nn
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
-from src.semantic_segmentation_toolkit.models import *
+from src.pixseg.models import *
 
 
 def test_registry():
@@ -45,7 +45,7 @@ def _main():
 
     import torchinfo
 
-    from src.semantic_segmentation_toolkit.datasets import resolve_metadata
+    from src.pixseg.datasets import resolve_metadata
 
     num_classes = resolve_metadata("Cityscapes").num_classes
     model = sfnet_lite_resnet101(num_classes=num_classes)
@@ -81,6 +81,6 @@ def _benchmark(size=(1, 3, 512, 512), repeats=3):
 
 
 if __name__ == "__main__":
-    from src.semantic_segmentation_toolkit.models.upernet import *
+    from src.pixseg.models.upernet import *
 
     _main()

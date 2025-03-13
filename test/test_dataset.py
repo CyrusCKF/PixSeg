@@ -9,8 +9,8 @@ from torch import Tensor
 from torch.utils.data import Subset
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
-from src.semantic_segmentation_toolkit.datasets import *
-from src.semantic_segmentation_toolkit.utils.transform import SegmentationTransform
+from src.pixseg.datasets import *
+from src.pixseg.utils.transform import SegmentationTransform
 
 
 def test_registry():

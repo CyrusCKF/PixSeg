@@ -1,4 +1,3 @@
-from torch import nn
 from torch.hub import load_state_dict_from_url
 from torchvision.models import ResNet18_Weights, resnet18
 from torchvision.models.segmentation.lraspp import LRASPP, lraspp_mobilenet_v3_large

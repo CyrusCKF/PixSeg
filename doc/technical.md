@@ -5,7 +5,7 @@ For those who want to have a deeper look at this project
 ## Folder structure
 
 - `doc` - Documentations, examples and related assets
-- `src/semantic_segmentation_toolkit` - Main source code
+- `src/pixseg` - Main source code
   - `datasets` - Custom datasets and associated metadata(labels, background index, etc ...)
   - `models` - Custom models, model weights and model builders
     - `models/backbones` - Model backbones and weights

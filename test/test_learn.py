@@ -7,8 +7,8 @@ from torch import Tensor
 from torch.utils.data import Dataset
 
 sys.path.append(str((Path(__file__) / "../..").resolve()))
-from src.semantic_segmentation_toolkit.learn import *
-from src.semantic_segmentation_toolkit.learn.weighting import WeightingFunc
+from src.pixseg.learn import *
+from src.pixseg.learn.weighting import WeightingFunc
 
 
 def test_registry():
