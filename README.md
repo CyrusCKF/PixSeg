@@ -138,9 +138,9 @@ Each dataset returns a tuple of (image, mask)
 
 #### Street scene
 
-- **BDD100K** (The official doc is not accessible now?) | [website](http://bdd-data.berkeley.edu/) • [benchmark](https://paperswithcode.com/sota/semantic-segmentation-on-bdd100k-val)
+- **BDD100K** Using the *10K Images* and *Segmentation* (The official doc is not accessible now?) | [website](http://bdd-data.berkeley.edu/) • [benchmark](https://paperswithcode.com/sota/semantic-segmentation-on-bdd100k-val)
 - **Cityscapes** | [website](https://www.cityscapes-dataset.com/) • [benchmark](https://paperswithcode.com/sota/semantic-segmentation-on-cityscapes-val)
-- **Mapillary Vistas** | [website](https://www.cityscapes-dataset.com/) • [benchmark](https://paperswithcode.com/sota/semantic-segmentation-on-mapillary-val)
+- **Mapillary Vistas** Using version 2.0 | [website](https://www.cityscapes-dataset.com/) • [benchmark](https://paperswithcode.com/sota/semantic-segmentation-on-mapillary-val)
 
 #### Human parts
 
@@ -214,11 +214,13 @@ This project separates data transforms and data augmentations, so that visualiza
 Let $n$ be number of classes and $S_i$ be number of ground truths in class $i$, i.e. $S_i = TP_i + FN_i$. Denote total number of samples to be $S = \sum_{i=1}^n S_i = TP + TN + FP + FN$
 
 ```math
-\text{accuracy} = \frac{TP}{S} \newline
-\text{mean accuracy} = \frac{1}{n} \times \sum_{i=1}^n \frac{TP_i}{S_i} \newline
-\text{mean IoU} = \frac{1}{n} \times \sum_{i=1}^n \frac{TP_i}{TP_i + FP_i + FN_i} \newline
-\text{frequency-weighted IoU} = \frac{1}{S} \times \sum_{i=1}^n  S_i \times \frac{TP_i}{TP_i + TN_i + FP_i} \newline
-\text{Dice} = \frac{1}{n} \times \sum_{i=1}^n \frac{2 \times TP_i}{2 \times TP_i + FP_i + FN_i} \newline
+\begin{flalign}
+\text{accuracy} &= \frac{TP}{S} && \newline
+\text{mean accuracy} &= \frac{1}{n} \times \sum_{i=1}^n \frac{TP_i}{S_i} && \newline
+\text{mean IoU} &= \frac{1}{n} \times \sum_{i=1}^n \frac{TP_i}{TP_i + FP_i + FN_i} && \newline
+\text{frequency-weighted IoU} &= \frac{1}{S} \times \sum_{i=1}^n  S_i \times \frac{TP_i}{TP_i + TN_i + FP_i} && \newline
+\text{Dice} &= \frac{1}{n} \times \sum_{i=1}^n \frac{2 \times TP_i}{2 \times TP_i + FP_i + FN_i} && \newline
+\end{flalign}
 ```
 
 ### Loggers\*
@@ -248,8 +250,10 @@ In the **\[full\]** version, trainer can record results locally or to various se
 
 Logs, confusion matrix, snapshots, checkpoints and models
 
-<img src="doc\assets\cm_example.png" alt="confusion matrix example" width="40%"/>
-<img src="doc\assets\snapshot_example.png" alt="snapshot example" width="40%"/>
+<p float="left">
+<img src="doc\assets\cm_example.png" alt="confusion matrix example" width="30%"/>
+<img src="doc\assets\snapshot_example.png" alt="snapshot example" width="30%"/>
+</p>
 
 ### WandB
 
