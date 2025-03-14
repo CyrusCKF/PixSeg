@@ -1,12 +1,14 @@
 from .bisenet import (
     BiSeNet,
     BiSeNet_ResNet18_Weights,
+    BiSeNet_ResNet50_Weights,
+    BiSeNet_Xception_Weights,
     bisenet_resnet18,
     bisenet_resnet50,
     bisenet_xception,
 )
-from .deeplabv3 import deeplabv3_resnet18
-from .enet import ENet, enet_original
+from .deeplabv3 import DeepLabV3_ResNet18_Weights, deeplabv3_resnet18
+from .enet import ENet, ENet_Weights, enet_original
 from .fcn import fcn_vgg16
 from .lraspp import lraspp_resnet18
 from .model_registry import (

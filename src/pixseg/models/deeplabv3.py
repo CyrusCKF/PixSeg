@@ -9,8 +9,9 @@ from torchvision.models.segmentation.deeplabv3 import (
 )
 from torchvision.models.segmentation.fcn import FCNHead
 
+from ..datasets import CITYSCAPES_LABELS, VOC_LABELS
 from .backbones import ResNetBackbone, replace_layer_name
-from .model_registry import register_model
+from .model_registry import SegWeights, SegWeightsEnum, register_model
 from .model_utils import _generate_docstring, _validate_weights_input
 
 register_model()(deeplabv3_mobilenet_v3_large)
@@ -18,19 +19,32 @@ register_model()(deeplabv3_resnet50)
 register_model()(deeplabv3_resnet101)
 
 
+class DeepLabV3_ResNet18_Weights(SegWeightsEnum):
+    CITYSCAPES = SegWeights(
+        "deeplabv3/deeplabv3_resnet18-cityscapes-512x1024.pth",
+        CITYSCAPES_LABELS,
+        "Trained on Cityscapes (fine) dataset",
+    )
+    SBD = SegWeights(
+        "deeplabv3/deeplabv3_resnet18-sbd-500x500.pth",
+        VOC_LABELS,
+        "Trained on Semantic Boundaries Dataset (SBD)",
+    )
+    DEFAULT = CITYSCAPES
+
+
 @_generate_docstring("DeepLabV3 model with a ResNet-18 backbone")
 @register_model()
 def deeplabv3_resnet18(
     num_classes: int | None = None,
-    weights: str | None = None,
+    weights: DeepLabV3_ResNet18_Weights | str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: ResNet18_Weights | str | None = ResNet18_Weights.DEFAULT,
 ) -> DeepLabV3:
-    if weights is not None:
-        raise NotImplementedError("Weights is not supported yet")
+    weights_model = DeepLabV3_ResNet18_Weights.resolve(weights)
     weights_model, weights_backbone, num_classes = _validate_weights_input(
-        None, weights_backbone, num_classes
+        weights_model, weights_backbone, num_classes
     )
 
     backbone_model = resnet18(weights=weights_backbone, progress=progress)

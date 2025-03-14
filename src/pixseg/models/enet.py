@@ -7,6 +7,10 @@ from ..datasets import CITYSCAPES_LABELS
 from .model_registry import SegWeights, SegWeightsEnum, register_model
 from .model_utils import _validate_weights_input
 
+#####
+# region Model
+#####
+
 
 def _pad_to_even_size(x: Tensor, value):
     # pad so that input is even for each downsample; otherwise unpooling is messy to deal with
@@ -220,13 +224,18 @@ class ENet(nn.Module):
         return {"out": out}
 
 
+#####
+# region Builder
+#####
+
+
 class ENet_Weights(SegWeightsEnum):
-    CITYSCAPES_FINE = SegWeights(
-        "enet/enet-cityscapes-512x1024-20250304.pth",
+    CITYSCAPES = SegWeights(
+        "enet/enet-cityscapes-512x1024.pth",
         CITYSCAPES_LABELS,
         "Trained on Cityscapes (fine) dataset",
     )
-    DEFAULT = CITYSCAPES_FINE
+    DEFAULT = CITYSCAPES
 
 
 # not name it enet to prevent name clashing with module

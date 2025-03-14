@@ -20,6 +20,10 @@ from .backbones import (
 from .model_registry import SegWeights, SegWeightsEnum, register_model
 from .model_utils import _generate_docstring, _validate_weights_input
 
+#####
+# region Model
+#####
+
 
 class ConvNormAct(nn.Sequential):
     def __init__(
@@ -194,8 +198,13 @@ class BiSeNet(nn.Module):
         return out
 
 
+#####
+# region Builder
+#####
+
+
 class BiSeNet_ResNet18_Weights(SegWeightsEnum):
-    CITYSCAPES_FINE = SegWeights(
+    CITYSCAPE = SegWeights(
         "bisenet/bisenet_resnet18-cityscapes-512x1024.pth",
         CITYSCAPES_LABELS,
         "Trained on Cityscapes (fine) dataset",
@@ -203,9 +212,27 @@ class BiSeNet_ResNet18_Weights(SegWeightsEnum):
     SBD = SegWeights(
         "bisenet/bisenet_resnet18-sbd-500x500.pth",
         VOC_LABELS,
-        "Trained on SBD",
+        "Trained on Semantic Boundaries Dataset (SBD)",
     )
-    DEFAULT = CITYSCAPES_FINE
+    DEFAULT = CITYSCAPE
+
+
+class BiSeNet_ResNet50_Weights(SegWeightsEnum):
+    CITYSCAPE = SegWeights(
+        "bisenet/bisenet_resnet50-cityscapes-512x1024.pth",
+        CITYSCAPES_LABELS,
+        "Trained on Cityscapes (fine) dataset",
+    )
+    DEFAULT = CITYSCAPE
+
+
+class BiSeNet_Xception_Weights(SegWeightsEnum):
+    CITYSCAPE = SegWeights(
+        "bisenet/bisenet_xception-cityscapes-512x1024.pth",
+        CITYSCAPES_LABELS,
+        "Trained on Cityscapes (fine) dataset",
+    )
+    DEFAULT = CITYSCAPE
 
 
 @_generate_docstring("Bilateral Segmentation Network model with a ResNet-18 backbone")
@@ -239,15 +266,14 @@ def bisenet_resnet18(
 @register_model()
 def bisenet_resnet50(
     num_classes: int | None = None,
-    weights: str | None = None,
+    weights: BiSeNet_ResNet50_Weights | str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: ResNet50_Weights | str | None = ResNet50_Weights.DEFAULT,
 ) -> BiSeNet:
-    if weights is not None:
-        raise NotImplementedError("Weights is not supported yet")
-    _, weights_backbone, num_classes = _validate_weights_input(
-        None, weights_backbone, num_classes
+    weights_model = BiSeNet_ResNet50_Weights.resolve(weights)
+    weights_model, weights_backbone, num_classes = _validate_weights_input(
+        weights_model, weights_backbone, num_classes
     )
 
     backbone_model = resnet50(
@@ -260,6 +286,10 @@ def bisenet_resnet50(
 
     channels = backbone.layer_channels()
     model = BiSeNet(num_classes, backbone, channels, use_aux=aux_loss)
+
+    if weights_model is not None:
+        state_dict = load_state_dict_from_url(weights_model.url, progress=progress)
+        model.load_state_dict(state_dict)
     return model
 
 
@@ -272,7 +302,7 @@ using xception39 as backbone, but I can't seem to find its definition?"""
 @register_model()
 def bisenet_xception(
     num_classes: int | None = None,
-    weights: str | None = None,
+    weights: BiSeNet_Xception_Weights | str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
     weights_backbone: Xception_Weights | str | None = Xception_Weights.DEFAULT,
@@ -282,10 +312,9 @@ def bisenet_xception(
     The BiSeNet paper suggested using xception39 as backbone, but I can't seem
     to find its definition?
     """
-    if weights is not None:
-        raise NotImplementedError("Weights is not supported yet")
-    _, weights_backbone, num_classes = _validate_weights_input(
-        None, weights_backbone, num_classes
+    weights_model = BiSeNet_Xception_Weights.resolve(weights)
+    weights_model, weights_backbone, num_classes = _validate_weights_input(
+        weights_model, weights_backbone, num_classes
     )
 
     backbone_model = xception_original(weights=weights_backbone, progress=progress)
@@ -294,4 +323,8 @@ def bisenet_xception(
 
     channels = backbone.layer_channels()
     model = BiSeNet(num_classes, backbone, channels, use_aux=aux_loss)
+
+    if weights_model is not None:
+        state_dict = load_state_dict_from_url(weights_model.url, progress=progress)
+        model.load_state_dict(state_dict)
     return model
