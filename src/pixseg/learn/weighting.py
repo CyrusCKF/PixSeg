@@ -1,7 +1,6 @@
 from typing import Callable
 
 import torch
-import tqdm
 from torch import Tensor
 from torch.utils.data import Dataset
 from torchvision.transforms.v2 import functional as TF
@@ -27,7 +26,13 @@ def count_classes(dataset: Dataset, num_classes: int):
     """Count the frequency of each class"""
     class_counts = torch.zeros([num_classes], dtype=torch.long)
     size = len(dataset)  # type: ignore
-    for _, mask in tqdm.tqdm(iter(dataset), total=size, desc="count_classes"):
+    try:
+        import tqdm
+
+        loader = tqdm.tqdm(iter(dataset), total=size, desc="count_classes")
+    except:
+        loader = iter(dataset)
+    for _, mask in loader:
         mask_tensor = TF.to_image(mask)
         mask_counts = torch.bincount(mask_tensor.flatten(), minlength=num_classes)
         class_counts += mask_counts[:num_classes]

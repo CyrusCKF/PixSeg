@@ -154,11 +154,11 @@ Each model returns a dict like `{ "out": Tensor }`. May contain other keys like 
 - **DeepLabv3** Rethinking Atrous Convolution for Semantic Image Segmentation (2017) | [paper](https://arxiv.org/abs/1706.05587) • [weights](https://github.com/CyrusCKF/PixSeg/releases/tag/deeplabv3)
 - **ENet** ENet: A Deep Neural Network Architecture for Real-Time Semantic Segmentation (2016) | [paper](https://arxiv.org/abs/1606.02147) • [weights](https://github.com/CyrusCKF/PixSeg/releases/tag/enet)
 - **FCN** Fully Convolutional Networks for Semantic Segmentation (2014) | [paper](https://arxiv.org/abs/1411.4038) • [weights](https://github.com/CyrusCKF/PixSeg/releases/tag/fcn)
-- **LRASPP** Searching for MobileNetV3 (2019) | [paper](https://arxiv.org/abs/1905.02244) • weights TBD
+- **LRASPP** Searching for MobileNetV3 (2019) | [paper](https://arxiv.org/abs/1905.02244) • [weights](https://github.com/CyrusCKF/PixSeg/releases/tag/lraspp)
 - **PSPNet** Pyramid Scene Parsing Network (2016) | [paper](https://arxiv.org/abs/1612.01105) • [weights](https://github.com/CyrusCKF/PixSeg/releases/tag/pspnet)
-- **SFNet-Lite** (2023) | [reference](https://github.com/lxtGH/SFSegNets) • weights TBD
+- **SFNet-Lite** (2023) | [reference](https://github.com/lxtGH/SFSegNets) • [weights](https://github.com/CyrusCKF/PixSeg/releases/tag/sfnet-lite)
 - **SFNet** Semantic Flow for Fast and Accurate Scene Parsing (2020) | [paper](https://arxiv.org/abs/2002.10120) • [weights](https://github.com/CyrusCKF/PixSeg/releases/tag/sfnet)
-- **UPerNet** Unified Perceptual Parsing for Scene Understanding (2018) | [paper](https://arxiv.org/abs/1807.10221) • weights TBD
+- **UPerNet** Unified Perceptual Parsing for Scene Understanding (2018) | [paper](https://arxiv.org/abs/1807.10221) • [weights](https://github.com/CyrusCKF/PixSeg/releases/tag/upernet)
 
 ### Model weights
 
