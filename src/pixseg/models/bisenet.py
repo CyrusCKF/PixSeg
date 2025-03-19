@@ -204,7 +204,7 @@ class BiSeNet(nn.Module):
 
 
 class BiSeNet_ResNet18_Weights(SegWeightsEnum):
-    CITYSCAPE = SegWeights(
+    CITYSCAPES = SegWeights(
         "bisenet/bisenet_resnet18-cityscapes-512x1024.pth",
         CITYSCAPES_LABELS,
         "Trained on Cityscapes (fine) dataset",
@@ -214,25 +214,25 @@ class BiSeNet_ResNet18_Weights(SegWeightsEnum):
         VOC_LABELS,
         "Trained on Semantic Boundaries Dataset (SBD)",
     )
-    DEFAULT = CITYSCAPE
+    DEFAULT = CITYSCAPES
 
 
 class BiSeNet_ResNet50_Weights(SegWeightsEnum):
-    CITYSCAPE = SegWeights(
+    CITYSCAPES = SegWeights(
         "bisenet/bisenet_resnet50-cityscapes-512x1024.pth",
         CITYSCAPES_LABELS,
         "Trained on Cityscapes (fine) dataset",
     )
-    DEFAULT = CITYSCAPE
+    DEFAULT = CITYSCAPES
 
 
 class BiSeNet_Xception_Weights(SegWeightsEnum):
-    CITYSCAPE = SegWeights(
+    CITYSCAPES = SegWeights(
         "bisenet/bisenet_xception-cityscapes-512x1024.pth",
         CITYSCAPES_LABELS,
         "Trained on Cityscapes (fine) dataset",
     )
-    DEFAULT = CITYSCAPE
+    DEFAULT = CITYSCAPES
 
 
 @_generate_docstring("Bilateral Segmentation Network model with a ResNet-18 backbone")

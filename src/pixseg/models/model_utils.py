@@ -28,19 +28,6 @@ def _validate_weights_input(
 T = TypeVar("T", bound=nn.Module)
 P = ParamSpec("P")
 
-_template = """{summary}
-
-{model_desc}
-
-Args:
-    
-    weights: {weights}
-    progress: If True, display the download progress.
-    {aux_loss}
-    {backbone}
-    {kwargs}
-"""
-
 
 def _generate_docstring(summary: str):
     """Generated doctstring can only be parsed at run time. Useful for torch.hub users"""

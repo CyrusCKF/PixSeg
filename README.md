@@ -1,22 +1,23 @@
 # PixSeg
 
-Pixel segmentation (a.k.a. semantic segmentation) is a task where the goal is to classify each pixel in an image into a class. This project is a lightweight yet fully featured and easy-to-use package for such task. It contains PyTorch implementation of various deep learning components, including models, pertrained weights, datasets, loss functions, etc.
+Pixel segmentation (a.k.a. semantic segmentation) is a task to classify each pixel in an image into a class.  
+This project is a lightweight and easy-to-use package for pixel segmentation. It provides a PyTorch implementation of various deep learning components, such as models, pretrained weights, datasets, loss functions, and more.
 
 ## Highlights
 
-- **Plug and play** - Custom models, backbones, datasets and other components with interface similar to *PyTorch* counterparts
-- **Lightweight** - Only dependency is pytorch (torch & torchvision) for standard versions
-- **Fully featured** - Provide visualization, metrics and data transform tools specifically for semantic segmentation
-- **Extensible** - Easily extend the registered components to include in your training config
-- **Comprehensive logging** - All hyperparameters and results are logged for multiple providers (local, WandB, Tensorboard, etc) using the custom trainer and config
+- **Plug & Play** - Integrate custom models, datasets, and other components with a *PyTorch*-like interface
+- **Lightweight** - Requires only *PyTorch* (torch & torchvision) as dependencies in the standard version
+- **Fully Featured** - Offers visualization tools, evaluation metrics and data transformation utilities tailored for semantic segmentation
+- **Extensible** - Easily register components for training configurations
+- **Logging** - Logs hyperparameters and results across platforms like local storage, Weights & Biases, TensorBoard
 
 ## Kickoff
 
-There **3 ways** to start using this project
+There are **3 ways** to start using this project.
 
-### *Option 1* With `torch.hub`
+### *Option 1* Use `torch.hub`
 
-This allows you to use model and pretrained weights **without installation** (you still need PyTorch). See [*here*](#models) for all models and their weights.
+This method lets you use models and pre-trained weights **without installation**. See [*here*](#models) for available models and pretrained weights.
 
 ```python
 import torch
@@ -25,25 +26,26 @@ print(torch.hub.help("CyrusCKF/PixSeg", "bisenet_resnet18"))
 model = torch.hub.load("CyrusCKF/PixSeg", "bisenet_resnet18", weights="DEFAULT")
 ```
 
-Refer to [doc/using_hub.ipynb](doc/using_hub.ipynb) for more usage. As this project shares the same interface as TorchVision, you may also refer to [the official doc](<https://pytorch.org/docs/main/hub.html>) or this section [Using models from Hub](https://pytorch.org/vision/main/models.html#using-models-from-hub) on how to use vision models via PyTorch Hub.
+For more details, refer to [doc/using_hub.ipynb](doc/using_hub.ipynb).  
+As this project shares the same interface as *TorchVision*, you may also check the [official documentation](<https://pytorch.org/docs/main/hub.html>) or [Using models from Hub](https://pytorch.org/vision/main/models.html#using-models-from-hub) on how to use vision models via PyTorch Hub.
 
 ### *Option 2* Import as package
 
-Run `pip install pixseg`  
-This supports models, datasets, loss functions, etc and some utility modules. See [*here*](#usage-examples) for usage.
+To install the package, run `pip install pixseg`  
+This includes models, datasets, loss functions, and utility modules. For examples, see [*here*](#usage-examples).
 
-Optionally, to use config and trainer, run `pip install pixseg[full]`  
+Optionally, for config and trainer system, run `pip install pixseg[full]`  
 
 ### *Option 3* Clone this project
 
-1. Run `git clone https://github.com/CyrusCKF/PixSeg.git`
-2. Create environment and install PyTorch <https://pytorch.org/get-started/locally/>
-3. Run `pip install -e .[dev]`
-4. See [*here*](#usage-examples) for usage.
+1. Clone this repo by `git clone https://github.com/CyrusCKF/PixSeg.git`
+2. Create new environment and install PyTorch <https://pytorch.org/get-started/locally/>
+3. Install dependencies in editable mode by `pip install -e .[dev]`
+4. For more usage, see [*here*](#usage-examples).
 
 ## Usage examples
 
-Here shows examples when you clone this project (*Option 3*). But the same concept applies for installing as package (*Option 2*)
+Here shows examples for when you clone this project (*Option 3*). The same concepts apply for installing it as package (*Option 2*)
 
 ### Dataset and its info
 
@@ -54,9 +56,9 @@ from src.pixseg.datasets import ADE20K, resolve_metadata
 from src.pixseg.utils.transform import SegmentationTransform
 
 root = Path(r"path/to/ADE20K")
-# Preset metadata of ADE20K, which includes number of classes, labels, index for background, etc
+# Preset metadata of ADE20K, which includes labels, background index, etc
 metadata = resolve_metadata("ADE20K")
-# Make sure the data is of the right format for the model input
+# Make sure the data is formatted correctly for model input
 transforms = SegmentationTransform(size=(512, 512), mask_fill=metadata.ignore_index)
 dataset = ADE20K(root, split="training", transforms=transforms)
 train_loader = DataLoader(dataset, batch_size=4, drop_last=True, shuffle=True)
@@ -70,7 +72,7 @@ from src.pixseg.learn import DiceLoss, Padam
 from src.pixseg.models import PSPNET_ResNet50_Weights, pspnet_resnet50
 from src.pixseg.utils.transform import SegmentationAugment
 
-# Create PSPNet with ResNet-50 backbone and activate auxillary loss
+# Create PSPNet with ResNet-50 backbone and enable auxiliary loss
 model = pspnet_resnet50(num_classes=metadata.num_classes, aux_loss=True)
 # Or initialize with pretrained weights
 model = pspnet_resnet50(weights=PSPNET_ResNet50_Weights.DEFAULT)
@@ -81,7 +83,7 @@ lr_scheduler = PolynomialLR(optimizer, total_iters=100, power=0.9)
 
 ### Training loop and utils
 
-Utils are mostly supplementary functions to training loops. Here is a brief example of using them.
+Utils are supplementary functions that enhance training loops. Below is a brief example of how to use them.
 
 ```python
 from torch import Tensor
@@ -113,11 +115,11 @@ for i in range(100):  # Set your number of epochs
 
 ### More on usage
 
-For general information about using models and pretrained weights, you may refere to <https://pytorch.org/vision/main/models.html#general-information-on-pre-trained-weights>, which shares the same interface. This section [Using models from Hub](https://pytorch.org/vision/main/models.html#using-models-from-hub) shows how to use models via PyTorch Hub.
+For general information about using models and pretrained weights, you may refere to <https://pytorch.org/vision/main/models.html#general-information-on-pre-trained-weights>, which shares the same interface. This section [Using models from Hub](https://pytorch.org/vision/main/models.html#using-models-from-hub) explains how to use models via PyTorch Hub.
 
-You may refer to [tasks/minimal_training.ipynb](tasks/minimal_training.ipynb) to see how to implement a simple training and evaluation loop. Pretrained weights and their training details can be found in the [*Release*](https://github.com/CyrusCKF/PixSeg/releases) side bar. All of them are also exposed through enums in code.
+You may check [tasks/minimal_training.ipynb](tasks/minimal_training.ipynb) to see how to implement a simple training and evaluation loop. Pretrained weights and their training details are available in the [*Release*](https://github.com/CyrusCKF/PixSeg/releases) sidebar. All of them are also exposed through enums in code.
 
-If you installed the **full** version or cloned this project, you can go to [tasks/training.ipynb](tasks/training.ipynb) to see how to start training with config and loggers. You may check [doc/config_doc.ipynb](doc/config_doc.ipynb) to customize the config. In [tasks/inference.ipynb](tasks/inference.ipynb) also demonstrates a lot of functions to improve performance in test time
+If you installed the **full** version or cloned this project, visit [tasks/training.ipynb](tasks/training.ipynb) to learn how to start training with config and loggers. For config options, refer to [doc/config_doc.ipynb](doc/config_doc.ipynb). Moreover, [tasks/inference.ipynb](tasks/inference.ipynb) demonstrates a lot of functions to improve performance in test time.
 
 ## Features
 
@@ -146,7 +148,7 @@ Each dataset returns a tuple of (image, mask)
 
 ### Models
 
-Each model returns a dict like `{ "out": Tensor }`. May contain other keys like *"aux"* for auxillary logits or [Deeply-Supervised Nets](https://arxiv.org/abs/1409.5185).
+Each model returns a dict like `{ "out": Tensor }`. May contain other keys like *"aux"* for auxiliary logits or [Deeply-Supervised Nets](https://arxiv.org/abs/1409.5185).
 
 - **BiSeNet** BiSeNet: Bilateral Segmentation Network for Real-time Semantic Segmentation (2018) | [paper](https://arxiv.org/abs/1808.00897) • [weights](https://github.com/CyrusCKF/PixSeg/releases/tag/bisenet)
 - **DeepLabv3** Rethinking Atrous Convolution for Semantic Image Segmentation (2017) | [paper](https://arxiv.org/abs/1706.05587) • [weights](https://github.com/CyrusCKF/PixSeg/releases/tag/deeplabv3)

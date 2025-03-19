@@ -92,17 +92,12 @@ class PSPNet(_SimpleSegmentationModel):
 
 
 class PSPNET_ResNet50_Weights(SegWeightsEnum):
-    VOC2012 = SegWeights(
-        "pspnet/pspnet_resnet50-voc2012-500x500-20250222.pth",
-        VOC_LABELS,
-        "Trained on PASCAL VOC 2012 dataset",
-    )
     CITYSCAPES = SegWeights(
-        "pspnet/pspnet_resnet50-cityscapes-512x1024-20250304.pth",
+        "pspnet/pspnet_resnet50-cityscapes-512x1024.pth",
         CITYSCAPES_LABELS,
         "Trained on Cityscapes (fine) dataset",
     )
-    DEFAULT = VOC2012
+    DEFAULT = CITYSCAPES
 
 
 @_generate_docstring("PSPNet model with a ResNet-50 backbone")

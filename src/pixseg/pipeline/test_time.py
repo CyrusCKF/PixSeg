@@ -132,6 +132,8 @@ def threshold_prob(prob: np.ndarray, threshold=0.5) -> dict[int, np.ndarray]:
 
 
 class TestTimeAugmentations:
+    __test__ = False
+
     def __init__(
         self,
         scales: Sequence[float] = (1,),

@@ -40,6 +40,13 @@ def test_model(fake_inputs, model_builder: Callable[..., nn.Module]):
             assert v.shape[2:] == fake_input.shape[2:]
 
 
+@pytest.mark.parametrize("model_name, weights_enum", MODEL_WEIGHTS.items())
+def test_weights(model_name: str, weights_enum: type[SegWeightsEnum]):
+    for w in weights_enum:
+        # try constructing with pretrained weights
+        MODEL_ZOO[model_name](weights=w.value)
+
+
 def _main():
     from pprint import pprint
 
@@ -48,15 +55,15 @@ def _main():
     from src.pixseg.datasets import resolve_metadata
 
     num_classes = resolve_metadata("Cityscapes").num_classes
-    model = sfnet_lite_resnet101(num_classes=num_classes)
+    model = lraspp_resnet18(num_classes=num_classes, weights_backbone=None)
     model.eval()
     print(model)
-
     input_size = [1, 3, 512, 1024]
     torchinfo.summary(model, input_size)
-    pprint(MODEL_ZOO.keys(), compact=True)
-    for key, weights in MODEL_WEIGHTS.items():
-        print(key, [w.name for w in weights])
+
+    # pprint(MODEL_ZOO.keys(), compact=True)
+    # for key, weights in MODEL_WEIGHTS.items():
+    #     print(key, [w.name for w in weights])
 
     # _benchmark(input_size)
 

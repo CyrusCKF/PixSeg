@@ -14,7 +14,7 @@ from torchvision.models.resnet import (
     resnet101,
 )
 
-from ..datasets import CITYSCAPES_LABELS
+from ..datasets import CITYSCAPES_LABELS, VOC_LABELS
 from .backbones import ResNetBackbone
 from .model_registry import SegWeights, SegWeightsEnum, register_model
 from .model_utils import _generate_docstring, _validate_weights_input
@@ -222,26 +222,51 @@ class SFNet(nn.Module):
         return {"out": main_out}
 
 
+class SFNet_ResNet18_Weights(SegWeightsEnum):
+    CITYSCAPES = SegWeights(
+        "sfnet/sfnet_resnet18-cityscapes-512x1024.pth",
+        CITYSCAPES_LABELS,
+        "Trained on Cityscapes (fine) dataset",
+    )
+    SBD = SegWeights(
+        "sfnet/sfnet_resnet18-sbd-500x500.pth",
+        VOC_LABELS,
+        "Trained on Semantic Boundaries Dataset (SBD)",
+    )
+    DEFAULT = CITYSCAPES
+
+
+class SFNet_ResNet101_Weights(SegWeightsEnum):
+    CITYSCAPES = SegWeights(
+        "sfnet/sfnet_resnet101-cityscapes-512x1024.pth",
+        CITYSCAPES_LABELS,
+        "Trained on Cityscapes (fine) dataset",
+    )
+    DEFAULT = CITYSCAPES
+
+
 @_generate_docstring("Semantic Flow Network model with a ResNet-18 backbone")
 @register_model()
 def sfnet_resnet18(
     num_classes: int | None = None,
-    weights: str | None = None,
+    weights: SFNet_ResNet18_Weights | str | None = None,
     progress: bool = True,
     weights_backbone: ResNet18_Weights | str | None = ResNet18_Weights.DEFAULT,
     **kwargs,
 ) -> SFNet:
-    if weights is not None:
-        raise NotImplementedError("Weights is not supported yet")
-    _, weights_backbone, num_classes = _validate_weights_input(
-        None, weights_backbone, num_classes
+    weights_model = SFNet_ResNet18_Weights.resolve(weights)
+    weights_model, weights_backbone, num_classes = _validate_weights_input(
+        weights_model, weights_backbone, num_classes
     )
 
     backbone_model = resnet18(weights=weights_backbone, progress=progress)
     backbone = ResNetBackbone(backbone_model)
-
     channels = backbone.layer_channels()
     model = SFNet(num_classes, backbone, channels, **kwargs)
+
+    if weights_model is not None:
+        state_dict = load_state_dict_from_url(weights_model.url, progress=progress)
+        model.load_state_dict(state_dict)
     return model
 
 
@@ -249,21 +274,23 @@ def sfnet_resnet18(
 @register_model()
 def sfnet_resnet101(
     num_classes: int | None = None,
-    weights: str | None = None,
+    weights: SFNet_ResNet101_Weights | str | None = None,
     progress: bool = True,
     weights_backbone: ResNet101_Weights | str | None = ResNet101_Weights.DEFAULT,
     **kwargs,
 ) -> SFNet:
     """See :class:`SFNet` for supported kwargs"""
-    if weights is not None:
-        raise NotImplementedError("Weights is not supported yet")
-    _, weights_backbone, num_classes = _validate_weights_input(
-        None, weights_backbone, num_classes
+    weights_model = SFNet_ResNet101_Weights.resolve(weights)
+    weights_model, weights_backbone, num_classes = _validate_weights_input(
+        weights_model, weights_backbone, num_classes
     )
 
     backbone_model = resnet101(weights=weights_backbone, progress=progress)
     backbone = ResNetBackbone(backbone_model)
-
     channels = backbone.layer_channels()
     model = SFNet(num_classes, backbone, channels, **kwargs)
+
+    if weights_model is not None:
+        state_dict = load_state_dict_from_url(weights_model.url, progress=progress)
+        model.load_state_dict(state_dict)
     return model

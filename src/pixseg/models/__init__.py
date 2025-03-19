@@ -10,7 +10,7 @@ from .bisenet import (
 from .deeplabv3 import DeepLabV3_ResNet18_Weights, deeplabv3_resnet18
 from .enet import ENet, ENet_Weights, enet_original
 from .fcn import fcn_vgg16
-from .lraspp import lraspp_resnet18
+from .lraspp import LRASPP_ResNet18_Weights, lraspp_resnet18
 from .model_registry import (
     MODEL_WEIGHTS,
     MODEL_ZOO,
@@ -24,6 +24,24 @@ from .model_registry import (
     register_model,
 )
 from .pspnet import PSPNet, PSPNET_ResNet50_Weights, pspnet_resnet50
-from .sfnet import SFNet, sfnet_resnet18, sfnet_resnet101
-from .sfnet_lite import SFNetLite, sfnet_lite_resnet18, sfnet_lite_resnet101
-from .upernet import UperNet, upernet_resnet18, upernet_resnet101
+from .sfnet import (
+    SFNet,
+    SFNet_ResNet18_Weights,
+    SFNet_ResNet101_Weights,
+    sfnet_resnet18,
+    sfnet_resnet101,
+)
+from .sfnet_lite import (
+    SFNetLite,
+    SFNetLite_ResNet18_Weights,
+    SFNetLite_ResNet101_Weights,
+    sfnet_lite_resnet18,
+    sfnet_lite_resnet101,
+)
+from .upernet import (
+    UperNet,
+    UPerNet_ResNet18_Weights,
+    UPerNet_ResNet101_Weights,
+    upernet_resnet18,
+    upernet_resnet101,
+)

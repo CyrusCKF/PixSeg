@@ -1,5 +1,5 @@
 from torch.hub import load_state_dict_from_url
-from torchvision import models as TM
+from torchvision.models import VGG16_Weights, vgg16
 from torchvision.models.segmentation.fcn import (
     FCN,
     FCNHead,
@@ -23,7 +23,7 @@ def fcn_vgg16(
     weights: str | None = None,
     progress: bool = True,
     aux_loss: bool = False,
-    weights_backbone: TM.VGG16_Weights | str | None = TM.VGG16_Weights.DEFAULT,
+    weights_backbone: VGG16_Weights | str | None = VGG16_Weights.DEFAULT,
 ) -> FCN:
     if weights is not None:
         raise NotImplementedError("Weights is not supported yet")
@@ -31,7 +31,7 @@ def fcn_vgg16(
         None, weights_backbone, num_classes
     )
 
-    backbone_model = TM.vgg16(weights=weights_backbone, progress=progress)
+    backbone_model = vgg16(weights=weights_backbone, progress=progress)
     backbone = VGGBackbone(backbone_model)
     replace_layer_name(backbone, {-1: "out", -2: "aux"})
 
