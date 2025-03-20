@@ -24,6 +24,7 @@ def draw_mask_on_image(
     mask: Tensor,
     colors: Sequence[tuple[int, int, int]],
     extra_color: tuple[int, int, int] | None = None,
+    alpha: float = 0.8,
 ) -> Tensor:
     """Overlay mask on image
 
@@ -35,11 +36,15 @@ def draw_mask_on_image(
 
     num_classes = len(colors)
     one_hot_mask = torch.stack([mask == i for i in range(num_classes)])
-    overlay = draw_segmentation_masks(image, one_hot_mask, colors=list(colors))
+    overlay = draw_segmentation_masks(
+        image, one_hot_mask, colors=list(colors), alpha=alpha
+    )
 
     if extra_color is not None:
         extra_mask = (mask < 0) | (mask >= num_classes)
-        overlay = draw_segmentation_masks(overlay, extra_mask, colors=extra_color)
+        overlay = draw_segmentation_masks(
+            overlay, extra_mask, colors=extra_color, alpha=alpha
+        )
     return overlay
 
 

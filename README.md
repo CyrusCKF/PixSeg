@@ -1,6 +1,6 @@
 # PixSeg
 
-![](doc\assets\prediction.gif)
+![prediction](./doc/assets/prediction_hstack.gif)
 
 Pixel segmentation (a.k.a. semantic segmentation) is a task to classify each pixel in an image into a class.  
 This project is a lightweight and easy-to-use package for pixel segmentation. It provides a PyTorch implementation of various deep learning components, such as models, pretrained weights, datasets, loss functions, and more.
