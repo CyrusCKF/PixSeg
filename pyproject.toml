@@ -48,6 +48,7 @@ dev = [
     "build>=1.2.2",
     "twine>=6.1.0",
     "h5py>=3.13.0",
+    "opencv-python>=4.11.0.86",
 ]
 
 [project.urls]
