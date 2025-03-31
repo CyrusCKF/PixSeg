@@ -1,23 +1,23 @@
-# PixSeg
+# ✨ PixSeg
 
 ![prediction](./doc/assets/prediction_hstack.gif)
 
 Pixel segmentation (a.k.a. semantic segmentation) is a task to classify each pixel in an image into a class.  
 This project is a lightweight and easy-to-use package for pixel segmentation. It provides a PyTorch implementation of various deep learning components, such as models, pretrained weights, datasets, loss functions, and more.
 
-## Highlights
+## 🌟 Highlights
 
-- **Plug & Play** - Integrate custom models, datasets, and other components with a *PyTorch*-like interface
-- **Lightweight** - Requires only *PyTorch* (torch & torchvision) as dependencies in the standard version
-- **Fully Featured** - Offers visualization tools, evaluation metrics and data transformation utilities tailored for semantic segmentation
-- **Extensible** - Easily register components for training configurations
-- **Logging** - Logs hyperparameters and results across platforms like local storage, Weights & Biases, TensorBoard
+- **Plug & Play** 🎯 - Integrate custom models, datasets, and other components with a *PyTorch*-like interface
+- **Lightweight** 👾 - Requires only *PyTorch* (torch & torchvision) as dependencies in the standard version
+- **Fully Featured** 🧰 - Offers visualization tools, evaluation metrics and data transformation utilities tailored for semantic segmentation
+- **Extensible** 🎨 - Easily register components for training configurations
+- **Logging** 📷 - Logs hyperparameters and results across platforms like local storage, Weights & Biases, TensorBoard
 
-## Kickoff
+## 🏃 Kickoff 
 
 There are **3 ways** to start using this project.
 
-### *Option 1* Use `torch.hub`
+### *Option 1* 💎 Use `torch.hub`
 
 This method lets you use models and pre-trained weights **without installation**. See [*here*](#models) for available models and pretrained weights.
 
@@ -31,25 +31,25 @@ model = torch.hub.load("CyrusCKF/PixSeg", "bisenet_resnet18", weights="DEFAULT")
 For more details, refer to [doc/using_hub.ipynb](doc/using_hub.ipynb).  
 As this project shares the same interface as *TorchVision*, you may also check the [official documentation](<https://pytorch.org/docs/main/hub.html>) or [Using models from Hub](https://pytorch.org/vision/main/models.html#using-models-from-hub) on how to use vision models via PyTorch Hub.
 
-### *Option 2* Import as package
+### *Option 2* 💖 Import as package
 
 To install the package, run `pip install pixseg`  
 This includes models, datasets, loss functions, and utility modules. For examples, see [*here*](#usage-examples).
 
 Optionally, for config and trainer system, run `pip install pixseg[full]`  
 
-### *Option 3* Clone this project
+### *Option 3* 💠 Clone this project
 
 1. Clone this repo by `git clone https://github.com/CyrusCKF/PixSeg.git`
 2. Create new environment and install PyTorch <https://pytorch.org/get-started/locally/>
 3. Install dependencies in editable mode by `pip install -e .[dev]`
 4. For more usage, see [*here*](#usage-examples).
 
-## Usage examples
+## 👀 Usage examples
 
 Here shows examples for when you clone this project (*Option 3*). The same concepts apply for installing it as package (*Option 2*)
 
-### Dataset and its info
+### Dataset and its info 🧮
 
 ```python
 from pathlib import Path
@@ -66,7 +66,7 @@ dataset = ADE20K(root, split="training", transforms=transforms)
 train_loader = DataLoader(dataset, batch_size=4, drop_last=True, shuffle=True)
 ```
 
-### Network components
+### Network components 🧠
 
 ```python
 from torch.optim.lr_scheduler import PolynomialLR
@@ -83,7 +83,7 @@ optimizer = Padam(model.parameters(), lr=0.1, weight_decay=5e-4, partial=0.125)
 lr_scheduler = PolynomialLR(optimizer, total_iters=100, power=0.9)
 ```
 
-### Training loop and utils
+### Training loop and utils 🔁
 
 Utils are supplementary functions that enhance training loops. Below is a brief example of how to use them.
 
@@ -115,7 +115,7 @@ for i in range(100):  # Set your number of epochs
     exhibit_figure(show=False, save_to=Path("confusion_matrix.png"))
 ```
 
-### More on usage
+### More on usage 🛠️
 
 For general information about using models and pretrained weights, you may refere to <https://pytorch.org/vision/main/models.html#general-information-on-pre-trained-weights>, which shares the same interface. This section [Using models from Hub](https://pytorch.org/vision/main/models.html#using-models-from-hub) explains how to use models via PyTorch Hub.
 
@@ -123,7 +123,7 @@ You may check [tasks/minimal_training.ipynb](tasks/minimal_training.ipynb) to se
 
 If you installed the **full** version or cloned this project, visit [tasks/training.ipynb](tasks/training.ipynb) to learn how to start training with config and loggers. For config options, refer to [doc/config_doc.ipynb](doc/config_doc.ipynb). Moreover, [tasks/inference.ipynb](tasks/inference.ipynb) demonstrates a lot of functions to improve performance in test time.
 
-## Features
+## 🗂️ Features
 
 Some of them is available in PyTorch. They are listed here for clarity and to show that the custom components are fully compliant with them.
 
